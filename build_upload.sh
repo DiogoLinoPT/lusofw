@@ -33,4 +33,8 @@ fi
 echo "=========================================="
 echo "2. Starting Upload to the radio..."
 echo "=========================================="
+FIRMWARE_VERSION_STRING="${LUSOFW_FIRMWARE_VERSION}-lusofw"
+FIRMWARE_BUILD_DATE_STRING="${FIRMWARE_VERSION}"
+export PLATFORMIO_BUILD_FLAGS="${PLATFORMIO_BUILD_FLAGS} -DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE_STRING}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"'"
+
 pio run -e $TARGET -t upload
