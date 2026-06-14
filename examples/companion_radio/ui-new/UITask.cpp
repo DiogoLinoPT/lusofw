@@ -9,7 +9,7 @@
 #ifndef AUTO_OFF_MILLIS
   #define AUTO_OFF_MILLIS     15000   // 15 seconds
 #endif
-#define BOOT_SCREEN_MILLIS   3000   // 3 seconds
+#define BOOT_SCREEN_MILLIS   5000   // 5 seconds
 
 #ifdef PIN_STATUS_LED
 #define LED_ON_MILLIS     20
@@ -52,18 +52,19 @@ public:
   }
 
   int render(DisplayDriver& display) override {
-    // meshcore logo
+    // meshcore logo (128x64, centered on the display)
+    int logoX = (display.width() - 128) / 2;
+    int logoY = (display.height() - 64) / 2;
     display.setColor(DisplayDriver::BLUE);
-    int logoWidth = 128;
-    display.drawXbm((display.width() - logoWidth) / 2, 3, meshcore_logo, logoWidth, 13);
+    display.drawXbm(logoX, logoY, meshcore_logo, 128, 64);
 
-    // version info
+    // version info (overlaid in the bottom empty band of the logo)
     display.setColor(DisplayDriver::LIGHT);
     display.setTextSize(2);
-    display.drawTextCentered(display.width()/2, 22, _version_info);
+    display.drawTextCentered(display.width()/2, logoY + 38, _version_info);
 
     display.setTextSize(1);
-    display.drawTextCentered(display.width()/2, 42, FIRMWARE_BUILD_DATE);
+    display.drawTextCentered(display.width()/2, logoY + 55, FIRMWARE_BUILD_DATE);
 
     return 1000;
   }
