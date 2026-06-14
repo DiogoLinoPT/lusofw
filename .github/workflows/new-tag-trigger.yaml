@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 5
+      max-parallel: 15
       matrix:
         firmware:
           - Heltec_t114_repeater
@@ -69,7 +69,10 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio-${{ matrix.firmware }}
+            ~/.platformio/packages
+            ~/.platformio/platforms
+            ~/.platformio/lib
+          key: ${{ runner.os }}-pio
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -79,6 +82,10 @@ jobs:
       - name: Install PlatformIO
         shell: bash
         run: pip install --upgrade platformio
+
+      - name: Update PlatformIO dependencies
+        shell: bash
+        run: pio pkg update -d .
 
       - name: Extract versions
         run: |

@@ -16,12 +16,14 @@
 		// debian tty* is owned by dialout (20)
 		"--group-add=20"
 	],
+	"mounts": [
+	],
 	"postCreateCommand": {
 		"platformio": "pipx install platformio",
 		"opencode": "curl -fsSL https://opencode.ai/install | bash"
 	},
 	"updateContentCommand": {
-		"gsd": "npx --yes get-shit-done-cc@latest --opencode --global"
+		"gsd": "npx --yes @opengsd/gsd-core@latest --opencode --global"
 	},
 	"customizations": {
 		"vscode": {
