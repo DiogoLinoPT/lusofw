@@ -62,7 +62,7 @@ public:
     } else {
 
     // meshcore website
-    const char* website = "meshcore.io";
+    const char* website = "https://meshcore.pt";
     display.setColor(DisplayDriver::LIGHT);
     display.setTextSize(1);
     uint16_t websiteWidth = display.getTextWidth(website);

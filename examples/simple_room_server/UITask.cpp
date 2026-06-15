@@ -102,29 +102,20 @@ void UITask::renderCurrScreen() {
     int logoX = (_display->width() - 128) / 2;
     int logoY = (_display->height() - 64) / 2;
     _display->setColor(DisplayDriver::BLUE);
-    int logoWidth = 128;
-    _display->drawXbm((_display->width() - logoWidth) / 2, 3, meshcore_logo, logoWidth, 13);
+    _display->drawXbm(logoX, logoY, meshcore_logo, 128, 64);
 
-    // meshcore website
-    const char* website = "https://meshcore.io";
+    // meshcore website (overlaid in the bottom empty band of the logo)
+    const char* website = "https://meshcore.pt";
     _display->setColor(DisplayDriver::LIGHT);
     _display->setTextSize(1);
     uint16_t websiteWidth = _display->getTextWidth(website);
-    _display->setCursor((_display->width() - websiteWidth) / 2, 22);
+    _display->setCursor((_display->width() - websiteWidth) / 2, logoY + 44);
     _display->print(website);
 
-    // version info (overlaid in the bottom empty band of the logo)
-    _display->setColor(DisplayDriver::LIGHT);
-    _display->setTextSize(1);
+    // version info
     uint16_t versionWidth = _display->getTextWidth(_version_info);
-    _display->setCursor((_display->width() - versionWidth) / 2, 35);
+    _display->setCursor((_display->width() - versionWidth) / 2, logoY + 54);
     _display->print(_version_info);
-
-    // node type
-    const char* node_type = "< Room Server >";
-    uint16_t typeWidth = _display->getTextWidth(node_type);
-    _display->setCursor((_display->width() - typeWidth) / 2, 48);
-    _display->print(node_type);
   } else {  // home screen
     // node name
     _display->setCursor(0, 0);

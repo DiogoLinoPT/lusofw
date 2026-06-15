@@ -56,24 +56,16 @@ public:
     int logoX = (display.width() - 128) / 2;
     int logoY = (display.height() - 64) / 2;
     display.setColor(DisplayDriver::BLUE);
-    int logoWidth = 128;
-    display.drawXbm((display.width() - logoWidth) / 2, 3, meshcore_logo, logoWidth, 13);
+    display.drawXbm(logoX, logoY, meshcore_logo, 128, 64);
 
-    // meshcore website
-    const char* website = "https://meshcore.io";
+    // meshcore website (overlaid in the bottom empty band of the logo)
+    const char* website = "https://meshcore.pt";
     display.setColor(DisplayDriver::LIGHT);
     display.setTextSize(1);
-    uint16_t websiteWidth = display.getTextWidth(website);
-    display.setCursor((display.width() - websiteWidth) / 2, 22);
-    display.print(website);
+    display.drawTextCentered(display.width()/2, logoY + 44, website);
 
-    // version info (overlaid in the bottom empty band of the logo)
-    display.setColor(DisplayDriver::LIGHT);
-    display.setTextSize(1);
-    display.drawTextCentered(display.width()/2, 35, _version_info);
-
-    display.setTextSize(1);
-    display.drawTextCentered(display.width()/2, 48, FIRMWARE_BUILD_DATE);
+    // version info
+    display.drawTextCentered(display.width()/2, logoY + 54, _version_info);
 
     return 1000;
   }
