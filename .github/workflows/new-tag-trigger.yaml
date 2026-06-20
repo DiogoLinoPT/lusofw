@@ -89,7 +89,7 @@ jobs:
 
       - name: Extract versions
         run: |
-          FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+FIRMWARE_VERSION[[:space:]]\+"' examples/companion_radio/MyMesh.h | \
+          FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
             sed -E 's/^[[:space:]]*#define[[:space:]]+FIRMWARE_VERSION[[:space:]]+"v([0-9.]+)".*/v\1/')
           LUSOFW_FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
             sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')

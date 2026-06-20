@@ -1035,8 +1035,13 @@ bool MyMesh::onPeerPathRecv(mesh::Packet *packet, int sender_idx, const uint8_t 
 #define CTL_TYPE_NODE_DISCOVER_RESP  0x90
 
 void MyMesh::onControlDataRecv(mesh::Packet *packet) {
-#if !defined(ENABLE_STEALTH_MODE)
+  if (packet->payload_len < 1) {
+    return;
+  }
+
   uint8_t type = packet->payload[0] & 0xF0; // just test upper 4 bits
+
+#if !defined(ENABLE_STEALTH_MODE)
   if (type == CTL_TYPE_NODE_DISCOVER_REQ && packet->payload_len >= 6 && !_prefs.disable_fwd &&
       discover_limiter.allow(rtc_clock.getCurrentTime())) {
     int i = 1;

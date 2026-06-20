@@ -121,6 +121,9 @@ build_firmware() {
   ENV_PLATFORM=($(get_platform_for_env $1))
   # get git commit sha
   COMMIT_HASH=$(git rev-parse --short HEAD)
+  
+  # full git tag for firmware build, e.g: main-abcdef-dirty
+  FIRMWARE_GIT_TAG=$(git rev-parse --abbrev-ref HEAD)-${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
 
   # set firmware build date
   FIRMWARE_BUILD_DATE=$(date '+%d-%b-%Y')
@@ -140,11 +143,11 @@ build_firmware() {
   # set firmware version string
   # e.g: v1.0.0-abcdef
   FIRMWARE_VERSION_STRING="${LUSOFW_FIRMWARE_VERSION}-lusofw"
-  FIRMWARE_BUILD_DATE_STRING="${FIRMWARE_VERSION}"
+  FIRMWARE_BUILD_DATE_STRING="${FIRMWARE_GIT_TAG}"
 
   # craft filename
   # e.g: RAK_4631_Repeater-v1.0.0-SHA
-  FIRMWARE_FILENAME="$1-${LUSOFW_FIRMWARE_VERSION}-lusofw-${COMMIT_HASH}"
+  FIRMWARE_FILENAME="$1-${LUSOFW_FIRMWARE_VERSION}-lusofw-${FIRMWARE_GIT_TAG}"
 
   # add firmware version info to end of existing platformio build flags in environment vars
   export PLATFORMIO_BUILD_FLAGS="${PLATFORMIO_BUILD_FLAGS} -DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE_STRING}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"'"
