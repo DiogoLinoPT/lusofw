@@ -1,5 +1,20 @@
 # Changelog
 
+## [UNRELEASED]
+
+Based on MeshCore v1.16.0
+main@e8d3c53ba1ea863937081cd0caad759b832f3028
+
+### Features
+
+- Add SHTC3 sensor support and update build flags in `platformio.ini`
+- Add `build_upload.sh` wrapper to compile and upload firmware in a single command
+
+### Improvements
+
+- Update meshcore website links and logo positioning across UI and splash tasks
+- Increase GitHub Actions max parallel jobs and update PlatformIO dependencies
+
 ## [v2026.5.2] - 25/05/2026
 
 Based on MeshCore v1.15.0
