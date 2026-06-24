@@ -32,7 +32,7 @@
 #include <helpers/StaticPoolPacketManager.h>
 #include <helpers/StatsFormatHelper.h>
 #include <helpers/TxtDataHelpers.h>
-#include <helpers/FirmwareMigration.h>
+#include <helpers/LusoDefaults.h>
 #include <helpers/RegionMap.h>
 #include "RateLimiter.h"
 

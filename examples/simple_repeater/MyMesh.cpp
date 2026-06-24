@@ -1217,11 +1217,12 @@ void MyMesh::begin(FILESYSTEM *fs) {
   _cli.loadPrefs(_fs);
 
   char oldVersion[32];
-  FirmwareMigration::readVersion(_fs, oldVersion, sizeof(oldVersion));
+  LusoDefaults::readVersion(_fs, oldVersion, sizeof(oldVersion));
   if (strcmp(oldVersion, LUSOFW_FIRMWARE_VERSION) != 0) {
-    FirmwareMigration::applyDefaultsByVersion(oldVersion, LUSOFW_FIRMWARE_VERSION, _prefs);
+    LusoDefaults::applyDefaults(_prefs);
     _cli.savePrefs(_fs);
-    FirmwareMigration::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
+    LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
+    board.reboot();  // doesn't return
   }
 
   acl.load(_fs, self_id);
