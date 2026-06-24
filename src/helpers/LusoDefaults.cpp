@@ -4,21 +4,23 @@
 #include <string.h>
 
 void LusoDefaults::applyDefaults(NodePrefs& prefs) {
-  prefs.advert_interval = 0;             // defaults to disabled on lusofw
-  prefs.advert_loc_policy = ADVERT_LOC_PREFS;
-  prefs.airtime_factor = 9.0f;
-  prefs.direct_tx_delay_factor = 0.3f;   // was 0.2
-  prefs.flood_advert_base = 0.308f;
-  prefs.flood_advert_interval = 24;      // defaults to 24h on lusofw, when >0 enabled our custom advert handling
-  prefs.interference_threshold = 14;     // enable listen before talk
-  prefs.rx_delay_base = 0.0f;            // turn off by default, was 10.0;
-  prefs.tx_delay_factor = 0.5f;          // was 0.25f
+  prefs.advert_interval = 0;                  // direct adverts are legacy
+  prefs.advert_loc_policy = ADVERT_LOC_PREFS; // use coordinates from prefs
+  prefs.airtime_factor = 1.0f;                // reverted to 50% due to internacionalization issues
+  prefs.direct_tx_delay_factor = 0.3f;        // was 0.2
+  prefs.flood_advert_base = 0.308f;           // magic number
+  prefs.flood_advert_interval = 24;  // defaults to 24h on lusofw, when >0 enabled our custom advert handling
+  prefs.interference_threshold = 14; // enable listen before talk
+  prefs.loop_detect = LOOP_DETECT_MINIMAL; // default to minimal loop detection
+  prefs.path_hash_mode = 1;                // default to 2 bytes
+  prefs.rx_delay_base = 0.0f;              // turn off by default, was 10.0;
+  prefs.tx_delay_factor = 0.5f;            // was 0.25f
 
 #if defined(USE_SX1262) || defined(USE_SX1268)
 #ifdef SX126X_RX_BOOSTED_GAIN
-  prefs.rx_boosted_gain = SX126X_RX_BOOSTED_GAIN;
+      prefs.rx_boosted_gain = SX126X_RX_BOOSTED_GAIN;
 #else
-  prefs.rx_boosted_gain = 1; // enabled by default;
+      prefs.rx_boosted_gain = 1; // enabled by default;
 #endif
 #endif
 }

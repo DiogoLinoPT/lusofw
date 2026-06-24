@@ -7,13 +7,20 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 ### Features
 
-- Add SHTC3 sensor support and update build flags in `platformio.ini`
-- Add `build_upload.sh` wrapper to compile and upload firmware in a single command
+- Added SHTC3 sensor support and updated the PlatformIO build flags.
+- Added a `build_upload.sh` wrapper to compile and upload firmware in a single command.
+- Reverted the airtime factor to 50% to address internationalization-related issues.
+- Set the repeater advert path hash size to 2 bytes.
+- Reduced loop detection sensitivity to the minimum setting.
 
 ### Improvements
 
-- Update meshcore website links and logo positioning across UI and splash tasks
-- Increase GitHub Actions max parallel jobs and update PlatformIO dependencies
+- Updated MeshCore website links and logo placement across the UI and splash screens.
+- Increased the GitHub Actions parallel job limit and updated the PlatformIO dependencies.
+
+### KTLO
+
+- Removed the `ENABLE_CONSENSUS_TIME_SYNC` feature from the codebase.
 
 ## [v2026.5.2] - 25/05/2026
 

@@ -69,16 +69,6 @@ struct NeighbourInfo {
   int8_t snr; // multiplied by 4, user should divide to get float value
 };
 
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-struct TimeSample {
-  uint8_t sender_prefix[4];
-  int32_t offset;
-  uint32_t sampled_at;
-};
-
-#define TIME_SYNC_SAMPLES 16
-#endif
-
 #ifndef FIRMWARE_BUILD_DATE
   #define FIRMWARE_BUILD_DATE   "6 Jun 2026"
 #endif
@@ -88,7 +78,7 @@ struct TimeSample {
 #endif
 
 #ifndef LUSOFW_FIRMWARE_VERSION
-  #define LUSOFW_FIRMWARE_VERSION "2026.6.1-rc1"
+  #define LUSOFW_FIRMWARE_VERSION "2026.6.1-rc2"
 #endif
 
 #define FIRMWARE_ROLE "repeater"
@@ -133,17 +123,11 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
 #elif defined(WITH_ESPNOW_BRIDGE)
   ESPNowBridge bridge;
 #endif
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-  TimeSample time_samples[TIME_SYNC_SAMPLES];
-  uint8_t time_sample_idx;
-  unsigned long next_time_sync;
-#endif
   // new advert system variables
   unsigned long next_advert_check, next_flood_advert_offset;
   uint8_t adverts_sent;
 
   void putNeighbour(const mesh::Identity& id, uint32_t timestamp, float snr);
-  void applyTimeConsensus();
   uint8_t handleLoginReq(const mesh::Identity& sender, const uint8_t* secret, uint32_t sender_timestamp, const uint8_t* data, bool is_flood);
   uint8_t handleAnonRegionsReq(const mesh::Identity& sender, uint32_t sender_timestamp, const uint8_t* data);
   uint8_t handleAnonOwnerReq(const mesh::Identity& sender, uint32_t sender_timestamp, const uint8_t* data);
