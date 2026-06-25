@@ -862,7 +862,7 @@ void MyMesh::formatRadioStatsReply(char *reply) {
 
 void MyMesh::formatPacketStatsReply(char *reply) {
   StatsFormatHelper::formatPacketStats(reply, radio_driver, getNumSentFlood(), getNumSentDirect(), 
-                                       getNumRecvFlood(), getNumRecvDirect());
+                                       getNumRecvFlood(), getNumRecvDirect(), getNumExpired());
 }
 
 void MyMesh::handleCommand(uint32_t sender_timestamp, char *command, char *reply) {

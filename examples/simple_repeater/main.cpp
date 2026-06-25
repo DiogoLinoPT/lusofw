@@ -29,15 +29,18 @@ static unsigned long userBtnDownAt = 0;
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-
-  board.begin();
 
 #if defined(MESH_DEBUG) && defined(NRF52_PLATFORM)
   // give some extra time for serial to settle so
   // boot debug messages can be seen on terminal
-  delay(5000);
+  unsigned long _serial_start = millis();
+  while (!Serial && millis() - _serial_start < 4000) {
+    delay(100);
+  }
 #endif
+
+  delay(1000);
+  board.begin();
 
 #ifdef DISPLAY_CLASS
   if (display.begin()) {
