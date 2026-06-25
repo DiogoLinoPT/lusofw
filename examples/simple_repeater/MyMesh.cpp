@@ -999,9 +999,9 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
 
   // defaults
   memset(&_prefs, 0, sizeof(_prefs));
-  _prefs.airtime_factor = 9.0;   // default to 10% duty cycle
-  _prefs.rx_delay_base = 0.0f;   // turn off by default, was 10.0;
-  _prefs.tx_delay_factor = 0.5f; // was 0.25f
+  _prefs.airtime_factor = 1.0;
+  _prefs.rx_delay_base = 0.0f;          // turn off by default, was 10.0;
+  _prefs.tx_delay_factor = 0.5f;        // was 0.25f
   _prefs.direct_tx_delay_factor = 0.3f; // was 0.2
   StrHelper::strncpy(_prefs.node_name, ADVERT_NAME, sizeof(_prefs.node_name));
   _prefs.node_lat = ADVERT_LAT;
@@ -1012,25 +1012,21 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   _prefs.bw = LORA_BW;
   _prefs.cr = LORA_CR;
   _prefs.tx_power_dbm = LORA_TX_POWER;
-  _prefs.advert_interval = 0;        // defaults to disabled on lusofw
-  _prefs.flood_advert_interval = 24; // defaults to 24h on lusofw, when >0 enabled our custom advert handling
-  _prefs.flood_advert_base = 0.308f;
+  _prefs.advert_interval = 1;        // default to 2 minutes for NEW installs
+  _prefs.flood_advert_interval = 47; // 47 hours
   _prefs.flood_max = 64;
   _prefs.flood_max_unscoped = 64;
   _prefs.flood_max_advert = 8;
-  _prefs.interference_threshold = 14; // enable listen before talk
+  _prefs.interference_threshold = 0; // disabled
 
   // bridge defaults
-  _prefs.bridge_enabled = 1;    // enabled
-  _prefs.bridge_delay   = 500;  // milliseconds
-  _prefs.bridge_pkt_src = 0;    // logTx
-  _prefs.bridge_baud = 57600;   // baud rate
-  _prefs.bridge_channel = 1;    // channel 1
+  _prefs.bridge_enabled = 1;   // enabled
+  _prefs.bridge_delay = 500;   // milliseconds
+  _prefs.bridge_pkt_src = 0;   // logTx
+  _prefs.bridge_baud = 115200; // baud rate
+  _prefs.bridge_channel = 1;   // channel 1
 
   StrHelper::strncpy(_prefs.bridge_secret, "LVSITANOS", sizeof(_prefs.bridge_secret));
-
-  // loop detect defaults
-  _prefs.loop_detect = LOOP_DETECT_MINIMAL;
 
   // GPS defaults
   _prefs.gps_enabled = 0;
