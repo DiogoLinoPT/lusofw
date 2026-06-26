@@ -22,7 +22,7 @@ TARGET=$1
 COMMIT_HASH=$(git rev-parse --short HEAD)
 
 # full git tag for firmware build, e.g: main-abcdef-dirty
-FIRMWARE_GIT_TAG=$(git rev-parse --abbrev-ref HEAD)-${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
+FIRMWARE_GIT_TAG=${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
 
 export FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
   sed -E 's/^[[:space:]]*#define[[:space:]]+FIRMWARE_VERSION[[:space:]]+"v([0-9.]+)".*/v\1/')

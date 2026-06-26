@@ -13,6 +13,11 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 - Reverted the airtime factor to 50% to address internationalization-related issues.
 - Set the repeater advert path hash size to 2 bytes.
 
+### Security
+
+- Fixed network time replay vulnerability; reject time-source timestamps not newer than the last accepted one.
+- Enforce initial sync (forward-only) vs maintenance sync (±60s), replacing the symmetric ±30s logic that allowed backward clock moves.
+
 ### Improvements
 
 - Updated MeshCore website links and logo placement across the UI and splash screens.

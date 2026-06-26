@@ -123,7 +123,7 @@ build_firmware() {
   COMMIT_HASH=$(git rev-parse --short HEAD)
   
   # full git tag for firmware build, e.g: main-abcdef-dirty
-  FIRMWARE_GIT_TAG=$(git rev-parse --abbrev-ref HEAD)-${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
+  FIRMWARE_GIT_TAG=${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
 
   # set firmware build date
   FIRMWARE_BUILD_DATE=$(date '+%d-%b-%Y')
