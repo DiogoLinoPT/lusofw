@@ -1,16 +1,64 @@
-name: Build lusofw
+name: Build lusofw (dev prerelease)
 
 permissions:
   contents: write
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.decide.outputs.should_run }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Decide whether to cut a new prerelease
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+            sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
+
+          if [[ -z "${VERSION}" ]]; then
+            echo "Failed to extract LUSOFW_FIRMWARE_VERSION from examples/simple_repeater/MyMesh.h"
+            exit 1
+          fi
+
+          echo "Current LUSOFW_FIRMWARE_VERSION: ${VERSION}"
+
+          # A version is considered "changed" when no existing prerelease tag
+          # starts with this version. Anchored on (-|$) so that, e.g.,
+          # 2026.6.1-rc2 does not falsely match 2026.6.1-rc20-<sha>.
+          EXISTING=$(gh release list --prereleases --json tagName -L 200 \
+            --jq '.[].tagName' | grep -E "^${VERSION}(-|$)" || true)
+
+          if [[ -n "${EXISTING}" ]]; then
+            echo "Existing prerelease(s) for ${VERSION}:"
+            echo "${EXISTING}"
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No prerelease exists yet for ${VERSION}; will build."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 15
@@ -109,9 +157,9 @@ jobs:
           path: out
 
   release:
-    needs: build
+    needs: [check, build]
+    if: needs.check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
@@ -123,21 +171,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            LUSOFW_FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
-              sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
-            SHORT_SHA=$(git rev-parse --short HEAD)
+          LUSOFW_FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+            sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
+          SHORT_SHA=$(git rev-parse --short HEAD)
 
-            if [[ -z "${LUSOFW_FIRMWARE_VERSION}" ]]; then
-              echo "Failed to extract LUSOFW_FIRMWARE_VERSION from examples/simple_repeater/MyMesh.h"
-              exit 1
-            fi
+          if [[ -z "${LUSOFW_FIRMWARE_VERSION}" ]]; then
+            echo "Failed to extract LUSOFW_FIRMWARE_VERSION from examples/simple_repeater/MyMesh.h"
+            exit 1
+          fi
 
-            echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
-            echo "CHANGELOG_TAG=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Create and push prerelease tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Tag ${RELEASE_TAG} already exists on remote; reusing it."
           else
-            echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
-            echo "CHANGELOG_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "${RELEASE_TAG}"
+            git push origin "${RELEASE_TAG}"
           fi
 
       - name: Download all artifacts
@@ -146,37 +203,40 @@ jobs:
           path: out
           merge-multiple: true
 
-      - name: Generate release notes from CHANGELOG
+      - name: Generate release notes
         shell: bash
         run: |
           set -euo pipefail
-          tag="${CHANGELOG_TAG}"
+          version="${RELEASE_VERSION}"
+          sha="${RELEASE_SHA}"
 
-          if [[ ! -f CHANGELOG.md ]]; then
-            echo "CHANGELOG.md not found; using empty release notes." > release_body.md
-            exit 0
-          fi
+          {
+            echo "Automated dev prerelease of dev@${sha} for ${version}."
+            echo ""
 
-          awk -v tag="$tag" '
-            BEGIN { capture=0 }
-            $0 ~ "^##[[:space:]]*\\[" tag "\\]" || $0 ~ "^##[[:space:]]*" tag "([[:space:]]|$)" {
-              capture=1
-              next
-            }
-            capture && $0 ~ "^##[[:space:]]" { exit }
-            capture { print }
-          ' CHANGELOG.md > release_body.md
+            if [[ ! -f CHANGELOG.md ]]; then
+              echo "CHANGELOG.md not found."
+              exit 0
+            fi
 
-          if [[ ! -s release_body.md ]]; then
-            awk '
+            awk -v tag="UNRELEASED" '
               BEGIN { capture=0 }
-              /^##[[:space:]]/ {
-                if (capture == 1) exit
+              $0 ~ "^##[[:space:]]*\\[" tag "\\]" || $0 ~ "^##[[:space:]]*" tag "([[:space:]]|$)" {
                 capture=1
                 next
               }
+              capture && $0 ~ "^##[[:space:]]" { exit }
               capture { print }
-            ' CHANGELOG.md > release_body.md
+            ' CHANGELOG.md
+
+          } > release_body.md
+
+          if [[ ! -s release_body.md ]] || [[ $(wc -l < release_body.md) -le 2 ]]; then
+            {
+              echo "Automated dev prerelease of dev@${sha} for ${version}."
+              echo ""
+              echo "No UNRELEASED changelog entries found."
+            } > release_body.md
           fi
 
       - name: Generate SHA1 checksums
@@ -194,6 +254,5 @@ jobs:
           name: ${{ env.RELEASE_TAG }}
           body_path: release_body.md
           draft: false
-          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          prerelease: true
           files: out/*
-
