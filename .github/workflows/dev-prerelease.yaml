@@ -46,14 +46,29 @@ jobs:
 
           echo "Current LUSOFW_FIRMWARE_VERSION: ${VERSION}"
 
-          # A version is considered "changed" when no existing prerelease tag
-          # starts with this version. Anchored on (-|$) so that, e.g.,
-          # 2026.6.1-rc2 does not falsely match 2026.6.1-rc20-<sha>.
-          EXISTING=$(gh release list --prereleases --json tagName -L 200 \
-            --jq '.[].tagName' | grep -E "^${VERSION}(-|$)" || true)
+          # A new prerelease is cut only when the version (without the git hash)
+          # has no prerelease yet. Candidate tags are gathered from *both* GitHub
+          # releases and the raw remote tags, so a transient `gh` API hiccup
+          # can't make us miss an existing prerelease and cut a duplicate.
+          #
+          # A tag belongs to ${VERSION} when it equals ${VERSION} exactly or
+          # starts with "${VERSION}-" (the ${VERSION}-<sha> form produced by the
+          # release job). Matching is literal (awk index/==, not regex) so dots
+          # in the version are treated as literals and rc2 does not falsely
+          # match rc20.
+          ALL_TAGS="$({
+            gh release list --prereleases --json tagName -L 200 \
+              --jq '.[].tagName' 2>/dev/null || true
+            git ls-remote --tags origin 2>/dev/null \
+              | sed -E 's#.*refs/tags/##; s/\^\{\}$//' || true
+          } | sort -u)"
+
+          EXISTING="$(awk -v v="${VERSION}" '
+            $0 == v || index($0, v "-") == 1 { print }
+          ' <<< "${ALL_TAGS}")"
 
           if [[ -n "${EXISTING}" ]]; then
-            echo "Existing prerelease(s) for ${VERSION}:"
+            echo "Existing prerelease(s)/tag(s) for ${VERSION}:"
             echo "${EXISTING}"
             echo "should_run=false" >> "$GITHUB_OUTPUT"
           else
