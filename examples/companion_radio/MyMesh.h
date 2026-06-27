@@ -180,6 +180,10 @@ public:
   // To check if there is pending work
   bool hasPendingWork() const;
 
+  // Number of received messages still waiting to be synced to a phone app.
+  // This is the source of truth for the device's "unread" indication.
+  int getOfflineQueueLen() const { return offline_queue_len; }
+
 private:
   void writeOKFrame();
   void writeErrFrame(uint8_t err_code);
