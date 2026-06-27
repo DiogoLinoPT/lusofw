@@ -78,7 +78,7 @@ struct NeighbourInfo {
 #endif
 
 #ifndef LUSOFW_FIRMWARE_VERSION
-  #define LUSOFW_FIRMWARE_VERSION "2026.6.1-rc2"
+  #define LUSOFW_FIRMWARE_VERSION "2026.6.1-rc3"
 #endif
 
 #define FIRMWARE_ROLE "repeater"
