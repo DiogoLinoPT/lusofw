@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+UPLOAD_FIRMWARE=0
+ARGS=()
+
+for arg in "$@"; do
+  if [ "$arg" == "--upload" ] || [ "$arg" == "-u" ]; then
+    UPLOAD_FIRMWARE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+# override the script args with the filtered list
+set -- "${ARGS[@]}"
+
 global_usage() {
   cat - <<EOF
 Usage:
@@ -128,16 +142,24 @@ build_firmware() {
   # set firmware build date
   FIRMWARE_BUILD_DATE=$(date '+%d-%b-%Y')
 
-  # get FIRMWARE_VERSION, which should be provided by the environment
+  # get FIRMWARE_VERSION, which should be provided by the environment or extracted from code
   if [ -z "$FIRMWARE_VERSION" ]; then
-    echo "FIRMWARE_VERSION must be set in environment"
-    exit 1
+    export FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+      sed -E 's/^[[:space:]]*#define[[:space:]]+FIRMWARE_VERSION[[:space:]]+"v([0-9.]+)".*/v\1/')
+    if [ -z "$FIRMWARE_VERSION" ]; then
+      echo "FIRMWARE_VERSION could not be determined from environment or code"
+      exit 1
+    fi
   fi
 
-  # get LUSOFW_FIRMWARE_VERSION, which should be provided by the environment
+  # get LUSOFW_FIRMWARE_VERSION
   if [ -z "$LUSOFW_FIRMWARE_VERSION" ]; then
-    echo "LUSOFW_FIRMWARE_VERSION must be set in environment"
-    exit 1
+    export LUSOFW_FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+      sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
+    if [ -z "$LUSOFW_FIRMWARE_VERSION" ]; then
+      echo "LUSOFW_FIRMWARE_VERSION could not be determined from environment or code"
+      exit 1
+    fi
   fi
 
   # set firmware version string
@@ -184,6 +206,12 @@ build_firmware() {
     cp .pio/build/$1/firmware.uf2 out/${FIRMWARE_FILENAME}.uf2 2>/dev/null || true
   fi
 
+  if [ "$UPLOAD_FIRMWARE" == "1" ]; then
+    echo "=========================================="
+    echo "Starting Upload to the radio..."
+    echo "=========================================="
+    pio run -e $1 -t upload
+  fi
 }
 
 # firmwares containing $1 will be built
@@ -259,6 +287,10 @@ rm -rf out
 mkdir -p out
 
 # handle script args
+if [ "$UPLOAD_FIRMWARE" == "1" ] && [[ "$1" != "build-firmware" ]]; then
+  echo "Error: The --upload or -u flag can only be used with the 'build-firmware' command."
+  exit 1
+fi
 if [[ $1 == "build-firmware" ]]; then
   TARGETS=${@:2}
   if [ "$TARGETS" ]; then
