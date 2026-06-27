@@ -31,10 +31,15 @@
 
 #include "icons.h"
 
+#ifdef HAS_RGB_LOGO
+  #include "logo_rgb.h"
+#endif
+
 class SplashScreen : public UIScreen {
   UITask* _task;
   unsigned long dismiss_after;
   char _version_info[12];
+  bool _logo_drawn = false;
 
 public:
   SplashScreen(UITask* task) : _task(task) {
@@ -52,6 +57,26 @@ public:
   }
 
   int render(DisplayDriver& display) override {
+#ifdef HAS_RGB_LOGO
+    if (!_logo_drawn) {
+      // One-time only: blit the RGB565 logo at panel-native resolution,
+      // horizontally centred and flush with the top of the screen. The panel is
+      // already black from display init, so the margins stay black without
+      // painting anything. Later renders skip this -- endFrame only repaints the
+      // text band, which sits below the logo, so the image is never touched.
+      int lx = (PANEL_NATIVE_W - MESHCORE_LOGO_RGB_W) / 2;
+      display.drawRGBBitmap(lx, 10, MESHCORE_LOGO_RGB_W, MESHCORE_LOGO_RGB_H, meshcore_logo_rgb);
+      _logo_drawn = true;
+    }
+
+    // Text goes through the normal 1-bit buffer, placed just below the logo
+    // (which occupies physical y 10..63). endFrame only paints this band.
+    const char* website = "https://meshcore.pt";
+    display.setColor(DisplayDriver::GRAY);
+    display.setTextSize(1);
+    display.drawTextCentered(display.width() / 2, 37, website);
+    display.drawTextCentered(display.width() / 2, 47, _version_info);
+#else
     // meshcore logo (128x64, centered on the display)
     int logoX = (display.width() - 128) / 2;
     int logoY = (display.height() - 64) / 2;
@@ -60,13 +85,13 @@ public:
 
     // meshcore website (overlaid in the bottom empty band of the logo)
     const char* website = "https://meshcore.pt";
-    display.setColor(DisplayDriver::LIGHT);
+    display.setColor(DisplayDriver::GRAY);
     display.setTextSize(1);
     display.drawTextCentered(display.width()/2, logoY + 44, website);
 
     // version info
     display.drawTextCentered(display.width()/2, logoY + 54, _version_info);
-
+#endif
     return 1000;
   }
 
@@ -118,9 +143,15 @@ class HomeScreen : public UIScreen {
     if (batteryPercentage > 100) batteryPercentage = 100; // Clamp to 100%
 
     // battery icon
-    int iconWidth = 24;
-    int iconHeight = 10;
-    int iconX = display.width() - iconWidth - 5; // Position the icon near the top-right corner
+#ifdef HAS_RGB_LOGO
+    // T114 ST7789: smaller icon so it isn't oversized after panel scaling.
+    const int iconWidth = 16, iconHeight = 8;
+    const int capW = 2, fillInset = 1, rightPad = 4;
+#else
+    const int iconWidth = 24, iconHeight = 10;
+    const int capW = 3, fillInset = 2, rightPad = 5;   // original values
+#endif
+    int iconX = display.width() - iconWidth - rightPad; // Position the icon near the top-right corner
     int iconY = 0;
     display.setColor(DisplayDriver::GREEN);
 
@@ -128,11 +159,11 @@ class HomeScreen : public UIScreen {
     display.drawRect(iconX, iconY, iconWidth, iconHeight);
 
     // battery "cap"
-    display.fillRect(iconX + iconWidth, iconY + (iconHeight / 4), 3, iconHeight / 2);
+    display.fillRect(iconX + iconWidth, iconY + (iconHeight / 4), capW, iconHeight / 2);
 
     // fill the battery based on the percentage
-    int fillWidth = (batteryPercentage * (iconWidth - 4)) / 100;
-    display.fillRect(iconX + 2, iconY + 2, fillWidth, iconHeight - 4);
+    int fillWidth = (batteryPercentage * (iconWidth - 2 * fillInset)) / 100;
+    display.fillRect(iconX + fillInset, iconY + fillInset, fillWidth, iconHeight - 2 * fillInset);
 
     // show muted icon if buzzer is muted
 #ifdef PIN_BUZZER

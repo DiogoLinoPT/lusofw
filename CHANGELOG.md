@@ -15,9 +15,10 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 ### Client
 
-- Added double-tap on the companion radio to mark all unread messages as read (dismiss-only: clears the on-device indication while leaving messages in the offline queue for later phone app sync).
-- The home screen `MSG` counter now reflects all messages still pending sync to the phone app, persisting after an on-device dismiss.
-- Fixed the advert page flashing for a frame when dismissing messages via double-tap; returning home now always lands on the status page.
+- Added a double-tap gesture on the companion radio to mark all unread messages as read (dismiss-only).
+- Rendered the T114 boot logo as a true-color RGB image at the native panel resolution (192×54).
+- Switched the T114 ST7789 font to DejaVu Sans UI.
+- Shrunk the battery indicator icon on the T114 to 16×8 logical pixels.
 
 ### Security
 

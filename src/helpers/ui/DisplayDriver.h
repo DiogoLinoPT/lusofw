@@ -8,7 +8,7 @@ class DisplayDriver {
 protected:
   DisplayDriver(int w, int h) { _w = w; _h = h; }
 public:
-  enum Color { DARK=0, LIGHT, RED, GREEN, BLUE, YELLOW, ORANGE }; // on b/w screen, colors will be !=0 synonym of light
+  enum Color { DARK=0, LIGHT, RED, GREEN, BLUE, YELLOW, ORANGE, GRAY }; // on b/w screen, colors will be !=0 synonym of light
 
   int width() const { return _w; }
   int height() const { return _h; }
@@ -27,6 +27,11 @@ public:
   virtual void fillRect(int x, int y, int w, int h) = 0;
   virtual void drawRect(int x, int y, int w, int h) = 0;
   virtual void drawXbm(int x, int y, const uint8_t* bits, int w, int h) = 0;
+  // Blit an RGB565 bitmap at panel-native resolution (1:1, no scaling).
+  // Coordinates are physical pixels relative to the panel origin. Returns true
+  // if the driver supports RGB output; the default no-op returns false so
+  // callers can fall back to a monochrome path (e.g. drawXbm) on OLED/e-ink.
+  virtual bool drawRGBBitmap(int x, int y, int w, int h, const uint16_t* rgb565) { return false; }
   virtual uint16_t getTextWidth(const char* str) = 0;
   virtual void drawTextCentered(int mid_x, int y, const char* str) {   // helper method (override to optimise)
     int w = getTextWidth(str);

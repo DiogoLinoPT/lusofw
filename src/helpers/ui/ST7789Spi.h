@@ -305,6 +305,37 @@ class ST7789Spi : public OLEDDisplay {
       }
     }
   }
+
+  // Blit an RGB565 bitmap directly to the panel at native resolution (1:1),
+  // bypassing the 1-bit OLEDDisplay framebuffer so each pixel can carry its
+  // own colour. The asset is standard RGB565; bytes are swapped per pixel while
+  // copying to hit the wire high-byte-first (the same convention setRGB() uses).
+  // nRF52 SPI uses EasyDMA which can only source from RAM, so the flash asset is
+  // streamed through a row-sized RAM buffer one line at a time.
+  void drawRGBBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t *rgb565) {
+    uint16_t rowBytes = (uint16_t)(w * 2);
+    uint8_t *row = (uint8_t *)rtos_malloc(rowBytes);
+    if (!row) return;
+
+    set_CS(LOW);
+    _spi->beginTransaction(_spiSettings);
+    setAddrWindow(x, y, w, h);   // programs CASET/RASET then issues RAMWR
+    for (uint16_t by = 0; by < h; by++) {
+      const uint8_t *src = (const uint8_t *)(rgb565 + (uint32_t)by * w);
+      for (uint16_t i = 0; i < w; i++) {   // swap to high-byte-first wire order
+        row[i * 2]     = src[i * 2 + 1];
+        row[i * 2 + 1] = src[i * 2];
+      }
+#ifdef ESP_PLATFORM
+      _spi->transferBytes(row, NULL, rowBytes);
+#else
+      _spi->transfer(row, NULL, rowBytes);
+#endif
+    }
+    _spi->endTransaction();
+    set_CS(HIGH);
+    rtos_free(row);
+  }
   
 
 //#define ST77XX_MADCTL_MY 0x80
