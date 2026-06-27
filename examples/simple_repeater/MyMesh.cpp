@@ -60,13 +60,10 @@
 
 #define LAZY_CONTACTS_WRITE_DELAY    5000
 
-#define NEIGHBOUR_EXPIRATION_SECS    (60 * 60 * 24 * 2) // 2 days
-
-#define ADVERTS_ALLOWED_START        0 // hours >=
-#define ADVERTS_ALLOWED_END          23 // hours <=
-
 void MyMesh::putNeighbour(const mesh::Identity &id, uint32_t timestamp, float snr) {
 #if MAX_NEIGHBOURS // check if neighbours enabled
+#define NEIGHBOUR_EXPIRATION_SECS (60 * 60 * 24 * 2) // 2 days
+
   uint32_t now = getRTCClock()->getCurrentTime();
   for (int i = 0; i < MAX_NEIGHBOURS; i++) {
     // Cleanup old neighbours
@@ -466,7 +463,11 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     }
   }
 
-#ifdef DISABLE_LEGACY_ADVERT
+#if 0
+#ifdef DISABLE_LEGACY_ADVERT 
+#define ADVERTS_ALLOWED_START 0  // hours >=
+#define ADVERTS_ALLOWED_END   23 // hours <=
+
   // Limit flood advert paket forwarding using a probabilistic reduction defined by P(h) = 0.308^(hops-1)
   // https://github.com/meshcore-dev/MeshCore/issues/1223
   if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->isRouteFlood()) {
@@ -528,6 +529,7 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     }
 #endif
   }
+#endif
 #endif
 
   // all other packets
