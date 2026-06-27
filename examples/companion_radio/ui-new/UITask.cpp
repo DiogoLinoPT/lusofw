@@ -206,11 +206,6 @@ public:
      : _task(task), _rtc(rtc), _sensors(sensors), _node_prefs(node_prefs), _page(0),
        _shutdown_init(false), sensors_lpp(200) {  }
 
-  // Reset to the main status page. Called whenever we (re)enter home so a
-  // previously-navigated page (e.g. ADVERT) doesn't linger and flash briefly
-  // after events like a message dismiss.
-  void resetToFirstPage() { _page = FIRST; }
-
   void poll() override {
     if (_shutdown_init && !_task->isButtonPressed()) {  // must wait for USR button to be released
       _task->shutdown();
@@ -244,10 +239,7 @@ public:
     if (_page == HomePage::FIRST) {
       display.setColor(DisplayDriver::YELLOW);
       display.setTextSize(2);
-      // The home counter reflects *all* messages still waiting in MyMesh's
-      // offline queue (i.e. not yet synced to the phone app), independent of the
-      // dismiss-aware _msgcount used for the unread LED/preview indication.
-      sprintf(tmp, "MSG: %d", the_mesh.getOfflineQueueLen());
+      sprintf(tmp, "MSG: %d", _task->getMsgCount());
       display.drawTextCentered(display.width() / 2, 20, tmp);
 
       #ifdef WIFI_SSID
@@ -513,10 +505,6 @@ class MsgPreviewScreen : public UIScreen {
 public:
   MsgPreviewScreen(UITask* task, mesh::RTCClock* rtc) : _task(task), _rtc(rtc) { num_unread = 0; }
 
-  // Resets the local preview queue counter (does not affect MyMesh's offline
-  // queue). Used when the user marks all messages as read via double-tap.
-  void clear() { num_unread = 0; }
-
   void addPreview(uint8_t path_len, const char* from_name, const char* msg) {
     head = (head + 1) % MAX_UNREAD_MSGS;
     if (num_unread < MAX_UNREAD_MSGS) num_unread++;
@@ -664,18 +652,14 @@ switch(t){
 
 
 void UITask::msgRead(int msgcount) {
-  // Phone app drained one or more messages from the offline queue; recompute the
-  // displayed count so the baseline stays consistent with the queue.
-  recomputeMsgCount(msgcount);
-  if (_msgcount == 0) {
+  _msgcount = msgcount;
+  if (msgcount == 0) {
     gotoHomeScreen();
   }
 }
 
 void UITask::newMsg(uint8_t path_len, const char* from_name, const char* text, int msgcount) {
-  // msgcount here is the full offline_queue_len; recompute against the dismiss
-  // baseline so only genuinely-new (post-dismiss) messages show as unread.
-  recomputeMsgCount(msgcount);
+  _msgcount = msgcount;
 
   ((MsgPreviewScreen *) msg_preview)->addPreview(path_len, from_name, text);
   setCurrScreen(msg_preview);
@@ -715,13 +699,6 @@ void UITask::userLedHandler() {
 void UITask::setCurrScreen(UIScreen* c) {
   curr = c;
   _next_refresh = 100;
-}
-
-void UITask::gotoHomeScreen() {
-  // Always (re)enter home on the main status page so a previously-navigated
-  // page (e.g. ADVERT) doesn't linger after events like a message dismiss.
-  ((HomeScreen*) home)->resetToFirstPage();
-  setCurrScreen(home);
 }
 
 /*
@@ -918,40 +895,10 @@ char UITask::handleLongPress(char c) {
   return c;
 }
 
-void UITask::recomputeMsgCount(int current_queue_len) {
-  // Dismiss-only semantics: _msgcount shows messages received *after* the last
-  // on-device dismiss (double-tap). _dismissed_baseline holds the queue length
-  // at that moment, so the displayed count is (current_queue_len - baseline).
-  if (current_queue_len <= _dismissed_baseline) {
-    // The phone app has synced down to (or past) the dismiss point, so every
-    // dismissed message has been consumed. Drop the baseline back to the
-    // current length so future messages count from here.
-    _dismissed_baseline = current_queue_len;
-    _msgcount = 0;
-  } else {
-    _msgcount = current_queue_len - _dismissed_baseline;
-  }
-}
-
 char UITask::handleDoubleClick(char c) {
   MESH_DEBUG_PRINTLN("UITask: double-click triggered");
-  c = checkDisplayOn(c);
-  if (c == 0) return 0;   // display was just turned on: consume, don't dismiss
-  // Double-tap while unread messages are shown on the LCD marks them all as read.
-  // This is dismiss-only: it clears the on-device indication (MSG counter, LED
-  // blink, preview screen) but leaves messages in MyMesh's offline queue so a
-  // phone app can still sync them later. When there are no unread messages the
-  // double-tap falls through to its normal page-back navigation.
-  if (_msgcount > 0) {
-    _dismissed_baseline = the_mesh.getOfflineQueueLen();  // remember dismiss point
-    _msgcount = 0;
-    ((MsgPreviewScreen *) msg_preview)->clear();           // drop local preview queue
-    gotoHomeScreen();                                       // land on MSG status page
-    showAlert("Marked read", 800);
-    _next_refresh = 0;
-    return 0;   // consume event (suppress page-back navigation)
-  }
-  return c;     // no unread messages: keep existing page-back behavior
+  checkDisplayOn(c);
+  return c;
 }
 
 char UITask::handleTripleClick(char c) {

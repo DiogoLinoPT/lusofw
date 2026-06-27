@@ -36,12 +36,6 @@ class UITask : public AbstractUITask {
   char _alert[80];
   unsigned long _alert_expiry;
   int _msgcount;
-  // Snapshot of offline_queue_len captured the last time the user dismissed
-  // messages with a double-tap. The displayed _msgcount is computed relative to
-  // this baseline (current queue length minus baseline), so already-dismissed
-  // messages don't reappear as unread when a new one arrives. See
-  // recomputeMsgCount() for the full semantics.
-  int _dismissed_baseline = 0;
   unsigned long ui_started_at, next_batt_chck;
   int next_backlight_btn_check = 0;
 #ifdef PIN_STATUS_LED
@@ -67,9 +61,6 @@ class UITask : public AbstractUITask {
   char handleDoubleClick(char c);
   char handleTripleClick(char c);
 
-  // Recomputes _msgcount from an offline_queue_len snapshot, factoring out any
-  // messages already dismissed on-device (see _dismissed_baseline).
-  void recomputeMsgCount(int current_queue_len);
   void setCurrScreen(UIScreen* c);
 
 public:
@@ -81,7 +72,7 @@ public:
   }
   void begin(DisplayDriver* display, SensorManager* sensors, NodePrefs* node_prefs);
 
-  void gotoHomeScreen();
+  void gotoHomeScreen() { setCurrScreen(home); }
   void showAlert(const char* text, int duration_millis);
   int  getMsgCount() const { return _msgcount; }
   bool hasDisplay() const { return _display != NULL; }

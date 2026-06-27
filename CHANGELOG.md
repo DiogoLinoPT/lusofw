@@ -15,11 +15,9 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 ### Client
 
-- Added a double-tap gesture on the companion radio to mark all unread messages as read (dismiss-only).
 - Rendered the T114 boot logo as a true-color RGB image at the native panel resolution (192×54).
 - Switched the T114 ST7789 font to DejaVu Sans UI.
 - Shrunk the battery indicator icon on the T114 to 16×8 logical pixels.
-
 ### Security
 
 - Fixed network time replay vulnerability; reject time-source timestamps not newer than the last accepted one.
