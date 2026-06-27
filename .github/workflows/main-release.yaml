@@ -41,13 +41,16 @@ jobs:
       max-parallel: 15
       matrix:
         firmware:
+          - Heltec_t114_companion_radio_ble
           - Heltec_t114_repeater
           - Heltec_t114_repeater_bridge_rs232
           - Heltec_t114_without_display_repeater
           - Heltec_t114_without_display_repeater_bridge_rs232
+          - Heltec_v3_companion_radio_ble
           - Heltec_v3_repeater
           - Heltec_v3_repeater_bridge_espnow
           - Heltec_v3_repeater_bridge_rs232
+          - heltec_v4_companion_radio_ble
           - heltec_v4_repeater
           - heltec_v4_repeater_bridge_espnow
           - heltec_v4_tft_repeater
@@ -97,7 +100,9 @@ jobs:
             ~/.platformio/packages
             ~/.platformio/platforms
             ~/.platformio/lib
-          key: ${{ runner.os }}-pio
+          key: ${{ runner.os }}-pio-${{ matrix.firmware }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -110,7 +115,7 @@ jobs:
 
       - name: Update PlatformIO dependencies
         shell: bash
-        run: pio pkg update -d .
+        run: pio pkg update -d . -e ${{ matrix.firmware }}
 
       - name: Extract versions
         run: |
