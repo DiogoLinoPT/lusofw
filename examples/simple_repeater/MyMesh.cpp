@@ -62,9 +62,8 @@
 
 #define NEIGHBOUR_EXPIRATION_SECS    (60 * 60 * 24 * 2) // 2 days
 
-#define ADVERTS_ALLOWED_START        2 // hours >=
-#define ADVERTS_ALLOWED_END          5 // hours <=
-#define ADVERTS_ALLOWED_COUNT        1
+#define ADVERTS_ALLOWED_START        0 // hours >=
+#define ADVERTS_ALLOWED_END          23 // hours <=
 
 void MyMesh::putNeighbour(const mesh::Identity &id, uint32_t timestamp, float snr) {
 #if MAX_NEIGHBOURS // check if neighbours enabled
@@ -1019,7 +1018,7 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   adverts_sent = 0;
   last_network_sync_time = 0;  // no network time sync accepted yet this boot
   next_advert_check = futureMillis(30000);
-  next_local_advert = next_flood_advert = next_flood_advert_offset = 0;
+  next_local_advert = next_flood_advert = 0;
 
   dirty_contacts_expiry = 0;
   set_radio_at = revert_radio_at = 0;
@@ -1225,18 +1224,58 @@ void MyMesh::updateFloodAdvertTimer() {
     next_flood_advert = 0; // stop the timer
   }
 #else
-  const uint32_t interval_upper_bound =
-      ((ADVERTS_ALLOWED_END - ADVERTS_ALLOWED_START + 1) * 60 * 60 / ADVERTS_ALLOWED_COUNT) - 60;
-  const uint32_t interval_lower_bound = 60; // 1 minute
+  const uint32_t WINDOW_SIZE_SECONDS = 25 * 3600; // 25 hours (Rolling Window)
+  const int32_t JITTER_MAX_SECONDS = 3; // 3 seconds Jitter to prevent advert collisions
 
-  uint32_t interval = getRNG()->nextInt(interval_lower_bound, interval_upper_bound);
-  next_flood_advert = futureMillis((interval + next_flood_advert_offset) * 1000);
+  // Calculate a deterministic hash using the native SHA256 utility.
+  // This ensures the hash is uniform and unique per node based on its name and public key.
+  uint32_t hash = 0;
+  const char* name = _prefs.node_name ? _prefs.node_name : "";
 
-  MESH_DEBUG_PRINTLN(
-      "%s updateFloodAdvertTimer: lower=%u, upper=%u, selected=%u, offset=%u (sec)",
-      getLogDateTime(), interval_lower_bound, interval_upper_bound, interval, next_flood_advert_offset);
+  mesh::Utils::sha256((uint8_t*)&hash, sizeof(hash), (const uint8_t*)name, strlen(name), self_id.pub_key, 4);
 
-  next_flood_advert_offset = interval_upper_bound - interval;
+  uint32_t my_offset = hash % WINDOW_SIZE_SECONDS;
+  uint32_t now_epoch = getRTCClock()->getCurrentTime();
+
+  // If there is no RTC (timestamp is older than Jan 1, 2020), we rely on millis() + offset + jitter
+  if (now_epoch < 1577836800) {
+      // Use uptime millis to give dynamic jitter across reboots when no RTC is present
+      int32_t random_jitter = ((hash ^ millis()) % 7) - 3;
+      uint32_t fallback_wait = my_offset + random_jitter;
+      // Prevent underflow
+      if ((int32_t)fallback_wait < 0) {
+          fallback_wait = 0;
+      }
+      next_flood_advert = futureMillis(fallback_wait * 1000);
+  } else {
+      // If we have an RTC, schedule for the next occurrence in the global calendar
+      uint32_t current_cycle_start = now_epoch - (now_epoch % WINDOW_SIZE_SECONDS);
+      uint32_t my_target_epoch = current_cycle_start + my_offset;
+      
+      // If we are already past the base target (accounting for the maximum possible negative jitter), 
+      // we must aim for the next cycle to prevent duplicate transmissions in the same cycle.
+      if (now_epoch + JITTER_MAX_SECONDS >= my_target_epoch) {
+          current_cycle_start += WINDOW_SIZE_SECONDS;
+          my_target_epoch += WINDOW_SIZE_SECONDS;
+      }
+      
+      // Use the cycle start to guarantee a different jitter on every new 25h cycle
+      // without using SPI hardware RNG.
+      int32_t random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
+      
+      my_target_epoch += random_jitter;
+      
+      uint32_t wait_seconds = my_target_epoch - now_epoch;
+
+      DateTime dt_target(my_target_epoch);
+      MESH_DEBUG_PRINTLN("[ %s | LusoFw ] updateFloodAdvertTimer(): Smart Adverts - Next Advert will be at %04d-%02d-%02d %02d:%02d:%02d (just wait %d seconds)", 
+                         getLogDateTime(), 
+                         dt_target.year(), dt_target.month(), dt_target.day(), 
+                         dt_target.hour(), dt_target.minute(), dt_target.second(),
+                         wait_seconds);
+
+      next_flood_advert = futureMillis(wait_seconds * 1000);
+  }
 #endif
 }
 
@@ -1486,41 +1525,22 @@ void MyMesh::loop() {
   }
 #else
   if (next_advert_check && millisHasNowPassed(next_advert_check)) {
-    next_advert_check = futureMillis(10 * 1000); // check every 10 seconds
+    next_advert_check = futureMillis(1 * 1000); // check every 1 second
 
-    uint32_t now = getRTCClock()->getCurrentTime();
-    DateTime dt = DateTime(now);
-    uint8_t current_hour = dt.hour();
-
-    if (current_hour >= ADVERTS_ALLOWED_START && current_hour <= ADVERTS_ALLOWED_END) {
-      MESH_DEBUG_PRINTLN("%s AdvertWindowCheck: hour=%d, adverts_sent=%d/%d, scheduled=%d, wait=%d",
-                         getLogDateTime(), current_hour, adverts_sent, ADVERTS_ALLOWED_COUNT,
-                         (next_flood_advert > 0), (next_flood_advert ? (int)(next_flood_advert - millis()) : 0));
-
-
-      if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
-        MESH_DEBUG_PRINTLN("%s Sending flood advert (%d/%d)", getLogDateTime(), adverts_sent + 1, ADVERTS_ALLOWED_COUNT);
+    if (_prefs.flood_advert_interval > 0) {
+      if (next_flood_advert == 0) {
+          updateFloodAdvertTimer();
+      } else if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
+        MESH_DEBUG_PRINTLN("[ %s | LusoFw ] checkNextFloodAdvert: Smart Adverts - Sending flood advert...", getLogDateTime());
         mesh::Packet *pkt = createSelfAdvert();
         if (pkt) sendFlood(pkt);
         next_flood_advert = 0;
-        adverts_sent++;
-      }
-
-      if (adverts_sent >= ADVERTS_ALLOWED_COUNT) {
-        // already sent max allowed adverts in this period
-        MESH_DEBUG_PRINTLN("%s Max advert count reached (%d) for current period, skipping", getLogDateTime(),
-                           ADVERTS_ALLOWED_COUNT);
-        return;
       }
 
       // checks if flood adverts are disabled, or if we already have one scheduled, before scheduling next one
       if (next_flood_advert == 0 && _prefs.flood_advert_interval > 0) {
         updateFloodAdvertTimer();
       }
-    } else if (adverts_sent > 0) {
-      adverts_sent = 0;
-      next_flood_advert = 0;
-      next_flood_advert_offset = 0;
     }
   }
 #endif
