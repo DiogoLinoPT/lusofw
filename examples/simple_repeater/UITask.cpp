@@ -1,6 +1,7 @@
 #include "UITask.h"
 #include <Arduino.h>
 #include <helpers/CommonCLI.h>
+#include <target.h>
 
 #ifndef USER_BTN_PRESSED
 #define USER_BTN_PRESSED LOW
@@ -8,6 +9,46 @@
 
 #define AUTO_OFF_MILLIS      20000  // 20 seconds
 #define BOOT_SCREEN_MILLIS   5000   // 5 seconds
+#define BATT_REFRESH_MILLIS  60000  // 60 seconds
+
+// LiPo discharge curve: per-cell open-circuit voltage (mV) -> remaining capacity (%).
+// Approximates a standard 1S LiPo at a low discharge rate; linearly interpolated
+// between points. Result clamped to [0, 100].
+static const struct { uint16_t milliVolts; uint8_t percent; } lipo_discharge_curve[] = {
+  { 4200, 100 }, { 4150, 95 }, { 4100, 90 }, { 4050, 85 }, { 4000, 80 },
+  { 3950, 74 }, { 3900, 68 }, { 3850, 60 }, { 3800, 50 }, { 3750, 38 },
+  { 3700, 28 }, { 3650, 18 }, { 3600, 10 }, { 3500,  5 }, { 3300,  0 },
+};
+
+#ifndef BATT_MIN_MILLIVOLTS
+  #define BATT_MIN_MILLIVOLTS 3000
+#endif
+#ifndef BATT_MAX_MILLIVOLTS
+  #define BATT_MAX_MILLIVOLTS 4200
+#endif
+
+// Maps a battery voltage to a state-of-charge percentage using the curve above.
+// The number of cells in series is derived from BATT_MAX_MILLIVOLTS, so the same
+// per-cell curve works for 1S (4.2 V) and 2S (8.4 V) packs.
+static int lipoPercentFromMilliVolts(uint16_t batteryMilliVolts) {
+  const int numCells = (BATT_MAX_MILLIVOLTS + 2099) / 4200;   // round(4.2 V per cell)
+  const uint16_t cellMilliVolts = batteryMilliVolts / numCells;
+
+  const int n = sizeof(lipo_discharge_curve) / sizeof(lipo_discharge_curve[0]);
+  if (cellMilliVolts >= lipo_discharge_curve[0].milliVolts) return 100;
+  if (cellMilliVolts <= lipo_discharge_curve[n - 1].milliVolts) return 0;
+
+  for (int i = 0; i < n - 1; i++) {
+    const uint16_t vHi = lipo_discharge_curve[i].milliVolts;
+    const uint16_t vLo = lipo_discharge_curve[i + 1].milliVolts;
+    if (cellMilliVolts <= vHi && cellMilliVolts >= vLo) {
+      const int pHi = lipo_discharge_curve[i].percent;
+      const int pLo = lipo_discharge_curve[i + 1].percent;
+      return pLo + (int)(cellMilliVolts - vLo) * (pHi - pLo) / (int)(vHi - vLo);
+    }
+  }
+  return 0;
+}
 
 // 'meshcore', 128x64px
 static const uint8_t meshcore_logo [] PROGMEM = {
@@ -81,6 +122,8 @@ void UITask::begin(NodePrefs* node_prefs, const char* build_date, const char* fi
   _prevBtnState = HIGH;
   _auto_off = millis() + AUTO_OFF_MILLIS;
   _node_prefs = node_prefs;
+  _cached_batt_mv = 0;
+  _next_batt_chck = 0;
   _display->turnOn();
 
   // strip off dash and commit hash by changing dash to null terminator
@@ -133,7 +176,21 @@ void UITask::renderCurrScreen() {
     _display->setCursor(0, 30);
     sprintf(tmp, "BW: %03.2f CR: %d", _node_prefs->bw, _node_prefs->cr);
     _display->print(tmp);
+
+    // battery percent (bottom-right corner)
+    renderBatteryPercent();
   }
+}
+
+void UITask::renderBatteryPercent() {
+  int batteryPercentage = lipoPercentFromMilliVolts(_cached_batt_mv);
+
+  char tmp[8];
+  sprintf(tmp, "%d%%", batteryPercentage);
+
+  _display->setColor(DisplayDriver::GREEN);
+  _display->setTextSize(1);
+  _display->drawTextRightAlign(_display->width(), _display->height() - 8, tmp);
 }
 
 void UITask::loop() {
@@ -156,6 +213,10 @@ void UITask::loop() {
 #endif
 
   if (_display->isOn()) {
+    if (millis() > _next_batt_chck) {
+      _cached_batt_mv = board.getBattMilliVolts();
+      _next_batt_chck = millis() + BATT_REFRESH_MILLIS;
+    }
     if (millis() >= _next_refresh) {
       _display->startFrame();
       renderCurrScreen();
