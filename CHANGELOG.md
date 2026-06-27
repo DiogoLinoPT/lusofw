@@ -8,16 +8,20 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 ### Features
 
 - Added SHTC3 sensor support and updated the PlatformIO build flags.
-- Drop stale packets from TX queue to prevent late/duplicate delivery
-- Enabled loop detection sensitivity with the minimum setting.
-- Reverted the airtime factor to 50% to address internationalization-related issues.
+- Dropped stale packets from the TX queue to prevent late or duplicate delivery.
+- Enabled loop detection at the minimum sensitivity setting.
+- Reverted the airtime factor to 50% to address issues related to internationalization.
 - Set the repeater advert path hash size to 2 bytes.
+- Disabled probabilistic reduction for adverts.
+- Added battery percentage to the repeater home screen.
 
 ### Client
 
-- Rendered the T114 boot logo as a true-color RGB image at the native panel resolution (192×54).
+- Rendered the T114 boot logo as a true-color RGB image at its native panel resolution (192×54).
 - Switched the T114 ST7789 font to DejaVu Sans UI.
-- Shrunk the battery indicator icon on the T114 to 16×8 logical pixels.
+- Shrunk the T114 battery indicator icon to 16×8 logical pixels.
+- The path hash mode defaults to 2 bytes.
+
 ### Security
 
 - Fixed network time replay vulnerability; reject time-source timestamps not newer than the last accepted one.
