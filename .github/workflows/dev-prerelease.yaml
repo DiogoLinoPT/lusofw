@@ -39,6 +39,11 @@ jobs:
             exit 1
           fi
 
+          # Ensure the version (and therefore the tag) always carries a "v" prefix.
+          if [[ "${VERSION}" != v* ]]; then
+            VERSION="v${VERSION}"
+          fi
+
           echo "Current LUSOFW_FIRMWARE_VERSION: ${VERSION}"
 
           # A version is considered "changed" when no existing prerelease tag
@@ -183,6 +188,11 @@ jobs:
           if [[ -z "${LUSOFW_FIRMWARE_VERSION}" ]]; then
             echo "Failed to extract LUSOFW_FIRMWARE_VERSION from examples/simple_repeater/MyMesh.h"
             exit 1
+          fi
+
+          # Ensure the version (and therefore the tag) always carries a "v" prefix.
+          if [[ "${LUSOFW_FIRMWARE_VERSION}" != v* ]]; then
+            LUSOFW_FIRMWARE_VERSION="v${LUSOFW_FIRMWARE_VERSION}"
           fi
 
           echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
