@@ -1245,7 +1245,7 @@ void MyMesh::updateFloodAdvertTimer() {
     next_flood_advert = 0; // stop the timer
   }
 #else
-  const uint32_t WINDOW_SIZE_SECONDS = 25 * 3600; // 25 hours (Rolling Window)
+  const uint32_t WINDOW_SIZE_SECONDS = 23 * 3600; // 23 hours (Rolling Window)
   const int32_t JITTER_MAX_SECONDS = 3; // 3 seconds Jitter to prevent advert collisions
 
   // Calculate a deterministic hash using the native SHA256 utility.

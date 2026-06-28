@@ -7,14 +7,15 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 ### Features
 
-- Added SHTC3 sensor support and updated the PlatformIO build flags.
-- Dropped stale packets from the TX queue to prevent late or duplicate delivery.
-- Enabled loop detection at the minimum sensitivity setting.
-- Reverted the airtime factor to 50% to address issues related to internationalization.
-- Set the repeater advert path hash size to 2 bytes.
-- Disabled probabilistic reduction for adverts.
-- Added battery percentage to the repeater home screen.
-- Implemented CAD, which should greatly reduce message-send failures. (Cherry-picked upstream PR #1727).
+- Added SHTC3 temperature/humidity sensor support (fixed I²C address 0x70) to the environment-sensor manager, exposed via the `ENV_INCLUDE_SHTC3` build flag and wired into the RAK4631 and RAK3112 variant configs with the matching Adafruit library dependency.
+- Outbound packets are now expired and dropped once they exceed the maximum queue age (`MAX_PACKET_QUEUE_AGE_MS`), freeing pool slots before head-of-line blocking and clearing dedup state so a later copy gets another chance instead of delivering stale or duplicate traffic.
+- Loop detection is now enabled by default at `LOOP_DETECT_MINIMAL` sensitivity (previously off). It drops packets whose flood path repeats a node hash, suppressing retransmission storms while keeping the check cheap enough for the lowest sensitivity tier.
+- Reverted the default airtime (duty-cycle) factor to 1.0, i.e. a 50% duty cycle, rolling back the prior setting that caused internationalization-related issues. The factor maps to a duty cycle of `100/(factor+1)%` over the rolling one-hour window.
+- The repeater path-hash mode now defaults to 2 bytes (`path_hash_mode=1`), up from 1 byte.
+- Disabled the per-hop probabilistic forwarding filter (`P(h)=0.308^(hops-1)`) that randomly dropped flood adverts as they propagated.
+- The repeater home screen now surfaces battery charge as an intuitive percentage, so remaining power can be read at a glance.
+- Implemented hardware Channel Activity Detection (CAD) listen-before-talk before each transmit, enabled by default. The radio samples the channel and defers TX while busy, with bounded retry and a CAD-timeout error flag if activity persists past the maximum duration. (Cherry-picked upstream PR #1727).
+- Added smart adverts: deterministic, collision-resistant flood-advert scheduling over a rolling 23h window, with each node's slot derived from its name and public key plus per-cycle jitter.
 
 ### Client
 
