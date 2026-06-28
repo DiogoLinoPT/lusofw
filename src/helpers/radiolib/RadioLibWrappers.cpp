@@ -185,16 +185,29 @@ int16_t RadioLibWrapper::performChannelScan() {
 
 bool RadioLibWrapper::isChannelActive() {
   // int.thresh: RSSI-based interference detection (relative to noise floor)
-  if (_threshold != 0 && getCurrentRSSI() > _noise_floor + _threshold) return true;
+  if (_threshold != 0) {
+    int rssi = getCurrentRSSI();
+    if (rssi > _noise_floor + _threshold) {
+      MESH_DEBUG_PRINTLN("RadioLibWrapper: RSSI interference (rssi=%d, floor=%d, thresh=%d)",
+                         (int)rssi, (int)_noise_floor, (int)_threshold);
+      return true;
+    }
+  }
 
   // cad: hardware channel activity detection
   if (_cad_enabled) {
+    uint32_t cad_t0 = millis();
     int16_t result = performChannelScan();
     // scanChannel() triggers DIO interrupt (CAD done) which sets STATE_INT_READY
     // via setFlag() ISR. Clear it before restarting RX so recvRaw() doesn't
     // try to read a non-existent packet and count a spurious recv error.
     state = STATE_IDLE;
     startRecv();
+    MESH_DEBUG_PRINTLN("RadioLibWrapper: CAD %s (result=%d, %lums)",
+                       (result == RADIOLIB_LORA_DETECTED)  ? "DETECTED (busy)"
+                       : (result == RADIOLIB_CHANNEL_FREE) ? "FREE (clear)"
+                       : "UNKNOWN",
+                       (int)result, (unsigned long)(millis() - cad_t0));
     if (result != RADIOLIB_CHANNEL_FREE) return true;
   }
 
