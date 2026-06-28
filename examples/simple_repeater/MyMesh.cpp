@@ -1273,9 +1273,10 @@ void MyMesh::updateFloodAdvertTimer() {
       uint32_t current_cycle_start = now_epoch - (now_epoch % WINDOW_SIZE_SECONDS);
       uint32_t my_target_epoch = current_cycle_start + my_offset;
       
-      // If we are already past the base target (accounting for the maximum possible negative jitter), 
-      // we must aim for the next cycle to prevent duplicate transmissions in the same cycle.
-      if (now_epoch + JITTER_MAX_SECONDS >= my_target_epoch) {
+      // If we are already past the latest possible transmission time for this cycle
+      // (base target + max positive jitter), aim for the next cycle to avoid duplicate
+      // transmissions and guarantee the slot stays in the future.
+      if (now_epoch > my_target_epoch + JITTER_MAX_SECONDS) {
           current_cycle_start += WINDOW_SIZE_SECONDS;
           my_target_epoch += WINDOW_SIZE_SECONDS;
       }
@@ -1284,16 +1285,21 @@ void MyMesh::updateFloodAdvertTimer() {
       // without using SPI hardware RNG.
       int32_t random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
       
-      my_target_epoch += random_jitter;
-      
-      uint32_t wait_seconds = my_target_epoch - now_epoch;
+      // Compute the target in signed space so a negative result never wraps silently,
+      // then clamp so the wait is always strictly positive (guards against uint32 underflow).
+      int64_t target_epoch = (int64_t)my_target_epoch + random_jitter;
+      if (target_epoch <= (int64_t)now_epoch) {
+          target_epoch = (int64_t)now_epoch + 1;
+      }
+      uint32_t wait_seconds = (uint32_t)(target_epoch - (int64_t)now_epoch);
+      DateTime dt_target((uint32_t)target_epoch);
 
-      DateTime dt_target(my_target_epoch);
-      MESH_DEBUG_PRINTLN("[ %s | LusoFw ] updateFloodAdvertTimer(): Smart Adverts - Next Advert will be at %04d-%02d-%02d %02d:%02d:%02d (just wait %d seconds)", 
-                         getLogDateTime(), 
-                         dt_target.year(), dt_target.month(), dt_target.day(), 
-                         dt_target.hour(), dt_target.minute(), dt_target.second(),
-                         wait_seconds);
+      MESH_DEBUG_PRINTLN(
+          "%s Next smart advert will be at %04d-%02d-%02d %02d:%02d:%02d (in %d seconds)",
+          getLogDateTime(), 
+          dt_target.year(), dt_target.month(), dt_target.day(), 
+          dt_target.hour(), dt_target.minute(), dt_target.second(),
+          wait_seconds);
 
       next_flood_advert = futureMillis(wait_seconds * 1000);
   }
@@ -1552,7 +1558,7 @@ void MyMesh::loop() {
       if (next_flood_advert == 0) {
           updateFloodAdvertTimer();
       } else if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
-        MESH_DEBUG_PRINTLN("[ %s | LusoFw ] checkNextFloodAdvert: Smart Adverts - Sending flood advert...", getLogDateTime());
+        MESH_DEBUG_PRINTLN("%s MyMesh::loop(): Sending flood advert", getLogDateTime());
         mesh::Packet *pkt = createSelfAdvert();
         if (pkt) sendFlood(pkt);
         next_flood_advert = 0;
