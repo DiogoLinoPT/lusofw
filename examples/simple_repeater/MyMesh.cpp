@@ -484,12 +484,12 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     // Advert payload structure: [pub_key(32)][timestamp(4)][signature(64)][app_data...]
     const int app_data_offset = PUB_KEY_SIZE + 4 + SIGNATURE_SIZE; // 32 + 4 + 64 = 100
 
-    // Extract advert type from app_data (lower 4 bits of first byte).
+    // Extract the advert type from app_data (the lower 4 bits of the first byte).
     uint8_t adv_type = (packet->payload_len > app_data_offset) ? (packet->payload[app_data_offset] & 0x0F) : 0xFF;
 
-    // Reject adverts from repeaters whose pub_key starts with 0x01 (MOBILE NODE)
+    // Reject adverts from repeaters whose pub_key starts with 0x01 (mobile node).
     if (packet->payload_len > 0 && adv_type == ADV_TYPE_REPEATER && packet->payload[0] == 0x01) {
-      MESH_DEBUG_PRINTLN("Flood advert REJECTED: pub_key starts with 0x01 for repeater");
+      MESH_DEBUG_PRINTLN("Flood advert rejected: pub_key starts with 0x01 for repeater");
       return false;
     }
 
@@ -531,6 +531,23 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
   }
 #endif
 #endif
+
+  // FIXME: Temporary patch to reject flood adverts from repeaters whose pub_key starts with 0x01 (mobile node).
+  // Remove this block when probabilistic flood advert filtering is enabled again.
+  if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->isRouteFlood()) {
+    // Advert payload structure: [pub_key(32)][timestamp(4)][signature(64)][app_data...]
+    const int app_data_offset = PUB_KEY_SIZE + 4 + SIGNATURE_SIZE; // 32 + 4 + 64 = 100
+
+    // Extract the advert type from app_data (the lower 4 bits of the first byte).
+    uint8_t adv_type =
+        (packet->payload_len > app_data_offset) ? (packet->payload[app_data_offset] & 0x0F) : 0xFF;
+
+    // Reject adverts from repeaters whose pub_key starts with 0x01 (mobile node).
+    if (packet->payload_len > 0 && adv_type == ADV_TYPE_REPEATER && packet->payload[0] == 0x01) {
+      MESH_DEBUG_PRINTLN("Flood advert rejected: pub_key starts with 0x01 for repeater");
+      return false;
+    }
+  }
 
   // all other packets
   return true;
