@@ -9,13 +9,13 @@ void LusoDefaults::applyDefaults(NodePrefs& prefs) {
   prefs.airtime_factor = 1.0f;                // reverted to 50% due to internacionalization issues
   prefs.direct_tx_delay_factor = 0.3f;        // was 0.2
   prefs.flood_advert_base = 0.308f;           // magic number
-  prefs.flood_advert_interval = 23;  // defaults to 23h on lusofw, when >0 enabled our custom advert handling
-  prefs.interference_threshold = 0; // disable RSSI based listen-before-talk
-  prefs.cad_enabled = 1;            // enable hardware CAD listen-before-talk (set cad off to disable)
-  prefs.loop_detect = LOOP_DETECT_MINIMAL; // default to minimal loop detection
-  prefs.path_hash_mode = 1;                // default to 2 bytes
-  prefs.rx_delay_base = 0.0f;              // turn off by default, was 10.0;
-  prefs.tx_delay_factor = 0.5f;            // was 0.25f
+  prefs.flood_advert_interval = 23;           // defaults to 23h on lusofw, when >0 enabled our custom advert handling
+  prefs.interference_threshold = 0;           // disable RSSI based listen-before-talk
+  prefs.cad_enabled = 1;                      // enable hardware CAD listen-before-talk (set cad off to disable)
+  prefs.loop_detect = LOOP_DETECT_MINIMAL;    // default to minimal loop detection
+  prefs.path_hash_mode = 1;                   // default to 2 bytes
+  prefs.rx_delay_base = 0.0f;                 // turn off by default, was 10.0;
+  prefs.tx_delay_factor = 0.5f;               // was 0.25f
 
 #if defined(USE_SX1262) || defined(USE_SX1268)
 #ifdef SX126X_RX_BOOSTED_GAIN

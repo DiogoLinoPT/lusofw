@@ -14,6 +14,7 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 - Set the repeater advert path hash size to 2 bytes.
 - Disabled probabilistic reduction for adverts.
 - Added battery percentage to the repeater home screen.
+- Implemented CAD, which should greatly reduce message-send failures. (Cherry-picked upstream PR #1727).
 
 ### Client
 
