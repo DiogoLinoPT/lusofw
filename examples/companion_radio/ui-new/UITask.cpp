@@ -9,7 +9,7 @@
 #ifndef AUTO_OFF_MILLIS
   #define AUTO_OFF_MILLIS     15000   // 15 seconds
 #endif
-#define BOOT_SCREEN_MILLIS   5000   // 5 seconds
+#define BOOT_SCREEN_MILLIS   3000   // 3 seconds
 
 #ifdef PIN_STATUS_LED
 #define LED_ON_MILLIS     20
@@ -31,55 +31,10 @@
 
 #include "icons.h"
 
-#ifdef HAS_RGB_LOGO
-  #include "logo_rgb.h"
-#endif
-
-// LiPo discharge curve: per-cell open-circuit voltage (mV) -> remaining capacity (%).
-// Approximates a standard 1S LiPo at a low discharge rate; linearly interpolated
-// between points. The non-linear S-shape (steep at the top, a long flat plateau
-// through the mid-range, steep drop near empty) tracks real cell behaviour far
-// better than a straight (v - min) / (max - min) line.
-static const struct { uint16_t milliVolts; uint8_t percent; } lipo_discharge_curve[] = {
-  { 4200, 100 }, { 4150, 95 }, { 4100, 90 }, { 4050, 85 }, { 4000, 80 },
-  { 3950, 74 }, { 3900, 68 }, { 3850, 60 }, { 3800, 50 }, { 3750, 38 },
-  { 3700, 28 }, { 3650, 18 }, { 3600, 10 }, { 3500,  5 }, { 3300,  0 },
-};
-
-// Maps a battery voltage to a state-of-charge percentage using the curve above.
-// The number of cells in series is derived from BATT_MAX_MILLIVOLTS, so the same
-// per-cell curve works for 1S (4.2 V) and 2S (8.4 V) packs. Result clamped to [0, 100].
-static int lipoPercentFromMilliVolts(uint16_t batteryMilliVolts) {
-#ifndef BATT_MIN_MILLIVOLTS
-  #define BATT_MIN_MILLIVOLTS 3000
-#endif
-#ifndef BATT_MAX_MILLIVOLTS
-  #define BATT_MAX_MILLIVOLTS 4200
-#endif
-  const int numCells = (BATT_MAX_MILLIVOLTS + 2099) / 4200;   // round(4.2 V per cell)
-  const uint16_t cellMilliVolts = batteryMilliVolts / numCells;
-
-  const int n = sizeof(lipo_discharge_curve) / sizeof(lipo_discharge_curve[0]);
-  if (cellMilliVolts >= lipo_discharge_curve[0].milliVolts) return 100;
-  if (cellMilliVolts <= lipo_discharge_curve[n - 1].milliVolts) return 0;
-
-  for (int i = 0; i < n - 1; i++) {
-    const uint16_t vHi = lipo_discharge_curve[i].milliVolts;
-    const uint16_t vLo = lipo_discharge_curve[i + 1].milliVolts;
-    if (cellMilliVolts <= vHi && cellMilliVolts >= vLo) {
-      const int pHi = lipo_discharge_curve[i].percent;
-      const int pLo = lipo_discharge_curve[i + 1].percent;
-      return pLo + (int)(cellMilliVolts - vLo) * (pHi - pLo) / (int)(vHi - vLo);
-    }
-  }
-  return 0;
-}
-
 class SplashScreen : public UIScreen {
   UITask* _task;
   unsigned long dismiss_after;
   char _version_info[12];
-  bool _logo_drawn = false;
 
 public:
   SplashScreen(UITask* task) : _task(task) {
@@ -97,41 +52,27 @@ public:
   }
 
   int render(DisplayDriver& display) override {
-#ifdef HAS_RGB_LOGO
-    if (!_logo_drawn) {
-      // One-time only: blit the RGB565 logo at panel-native resolution,
-      // horizontally centred and flush with the top of the screen. The panel is
-      // already black from display init, so the margins stay black without
-      // painting anything. Later renders skip this -- endFrame only repaints the
-      // text band, which sits below the logo, so the image is never touched.
-      int lx = (PANEL_NATIVE_W - MESHCORE_LOGO_RGB_W) / 2;
-      display.drawRGBBitmap(lx, 10, MESHCORE_LOGO_RGB_W, MESHCORE_LOGO_RGB_H, meshcore_logo_rgb);
-      _logo_drawn = true;
-    }
-
-    // Text goes through the normal 1-bit buffer, placed just below the logo
-    // (which occupies physical y 10..63). endFrame only paints this band.
-    const char* website = "https://meshcore.pt";
-    display.setColor(DisplayDriver::GRAY);
-    display.setTextSize(1);
-    display.drawTextCentered(display.width() / 2, 37, website);
-    display.drawTextCentered(display.width() / 2, 47, _version_info);
-#else
-    // meshcore logo (128x64, centered on the display)
-    int logoX = (display.width() - 128) / 2;
-    int logoY = (display.height() - 64) / 2;
+    // meshcore logo
     display.setColor(DisplayDriver::BLUE);
-    display.drawXbm(logoX, logoY, meshcore_logo, 128, 64);
+    int logoWidth = 128;
+    display.drawXbm((display.width() - logoWidth) / 2, 3, meshcore_logo, logoWidth, 13);
 
-    // meshcore website (overlaid in the bottom empty band of the logo)
-    const char* website = "https://meshcore.pt";
-    display.setColor(DisplayDriver::GRAY);
+    // meshcore website
+    const char* website = "https://meshcore.io";
+    display.setColor(DisplayDriver::LIGHT);
     display.setTextSize(1);
-    display.drawTextCentered(display.width()/2, logoY + 44, website);
+    uint16_t websiteWidth = display.getTextWidth(website);
+    display.setCursor((display.width() - websiteWidth) / 2, 22);
+    display.print(website);
 
     // version info
-    display.drawTextCentered(display.width()/2, logoY + 54, _version_info);
-#endif
+    display.setColor(DisplayDriver::LIGHT);
+    display.setTextSize(1);
+    display.drawTextCentered(display.width()/2, 35, _version_info);
+
+    display.setTextSize(1);
+    display.drawTextCentered(display.width()/2, 48, FIRMWARE_BUILD_DATE);
+
     return 1000;
   }
 
@@ -169,18 +110,23 @@ class HomeScreen : public UIScreen {
 
 
   void renderBatteryIndicator(DisplayDriver& display, uint16_t batteryMilliVolts) {
-    int batteryPercentage = lipoPercentFromMilliVolts(batteryMilliVolts);
+    // Convert millivolts to percentage
+#ifndef BATT_MIN_MILLIVOLTS
+  #define BATT_MIN_MILLIVOLTS 3000
+#endif
+#ifndef BATT_MAX_MILLIVOLTS
+  #define BATT_MAX_MILLIVOLTS 4200
+#endif
+    const int minMilliVolts = BATT_MIN_MILLIVOLTS;
+    const int maxMilliVolts = BATT_MAX_MILLIVOLTS;
+    int batteryPercentage = ((batteryMilliVolts - minMilliVolts) * 100) / (maxMilliVolts - minMilliVolts);
+    if (batteryPercentage < 0) batteryPercentage = 0; // Clamp to 0%
+    if (batteryPercentage > 100) batteryPercentage = 100; // Clamp to 100%
 
     // battery icon
-#ifdef HAS_RGB_LOGO
-    // T114 ST7789: smaller icon so it isn't oversized after panel scaling.
-    const int iconWidth = 16, iconHeight = 8;
-    const int capW = 2, fillInset = 1, rightPad = 4;
-#else
-    const int iconWidth = 24, iconHeight = 10;
-    const int capW = 3, fillInset = 2, rightPad = 5;   // original values
-#endif
-    int iconX = display.width() - iconWidth - rightPad; // Position the icon near the top-right corner
+    int iconWidth = 24;
+    int iconHeight = 10;
+    int iconX = display.width() - iconWidth - 5; // Position the icon near the top-right corner
     int iconY = 0;
     display.setColor(DisplayDriver::GREEN);
 
@@ -188,11 +134,11 @@ class HomeScreen : public UIScreen {
     display.drawRect(iconX, iconY, iconWidth, iconHeight);
 
     // battery "cap"
-    display.fillRect(iconX + iconWidth, iconY + (iconHeight / 4), capW, iconHeight / 2);
+    display.fillRect(iconX + iconWidth, iconY + (iconHeight / 4), 3, iconHeight / 2);
 
     // fill the battery based on the percentage
-    int fillWidth = (batteryPercentage * (iconWidth - 2 * fillInset)) / 100;
-    display.fillRect(iconX + fillInset, iconY + fillInset, fillWidth, iconHeight - 2 * fillInset);
+    int fillWidth = (batteryPercentage * (iconWidth - 4)) / 100;
+    display.fillRect(iconX + 2, iconY + 2, fillWidth, iconHeight - 4);
 
     // show muted icon if buzzer is muted
 #ifdef PIN_BUZZER
