@@ -1113,6 +1113,7 @@ void MyMesh::begin(FILESYSTEM *fs) {
     LusoDefaults::applyDefaults(_prefs);
     _cli.savePrefs(_fs);
     LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
+    delay(1000);
     board.reboot();  // doesn't return
   }
 
