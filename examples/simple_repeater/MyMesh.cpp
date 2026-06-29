@@ -793,6 +793,7 @@ void MyMesh::onAdvertRecv(mesh::Packet *packet, const mesh::Identity &id, uint32
             MESH_DEBUG_PRINTLN("Network time: %s apply, diff=%d sec -> %02d:%02d:%02d %d/%d/%d",
                                initial ? "INITIAL" : "maintenance", diff,
                                dt.hour(), dt.minute(), dt.second(), dt.day(), dt.month(), dt.year());
+            updateFloodAdvertTimer();  // reschedule smart advert against new clock (cf. name change)
           } else {
             MESH_DEBUG_PRINTLN("Network time: %s rejected (diff=%d sec)",
                                initial ? "initial(not-forward)" : "maintenance(outside +/-60)", diff);

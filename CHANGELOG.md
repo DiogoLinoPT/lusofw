@@ -20,9 +20,10 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 ### Client
 
 - Rendered the T114 boot logo as a true-color RGB image at its native panel resolution (192×54).
-- Switched the T114 ST7789 font to DejaVu Sans UI.
-- Shrunk the T114 battery indicator icon to 16×8 logical pixels.
-- The path hash mode defaults to 2 bytes.
+- Switched the T114 ST7789 font to DejaVu Sans UI for a cleaner, more readable interface and a more polished look.
+- Shrunk the T114 battery indicator icon to 16×8 logical pixels, reducing visual clutter while keeping the battery state easy to read at a glance.
+- The path hash mode now defaults to 2 bytes, giving the system a larger path-hash space and aligning the client behavior with the updated repeater defaults.
+- Implemented hardware Channel Activity Detection (CAD) listen-before-talk before each transmit, enabled by default. The radio samples the channel and defers TX while busy, with bounded retry and a CAD-timeout error flag if activity persists past the maximum duration. (Cherry-picked upstream PR #1727).
 
 ### Security
 
