@@ -1273,25 +1273,21 @@ void MyMesh::updateFloodAdvertTimer() {
       // If we have an RTC, schedule for the next occurrence in the global calendar
       uint32_t current_cycle_start = now_epoch - (now_epoch % WINDOW_SIZE_SECONDS);
       uint32_t my_target_epoch = current_cycle_start + my_offset;
-      
-      // If we are already past the latest possible transmission time for this cycle
-      // (base target + max positive jitter), aim for the next cycle to avoid duplicate
-      // transmissions and guarantee the slot stays in the future.
-      if (now_epoch > my_target_epoch + JITTER_MAX_SECONDS) {
-          current_cycle_start += WINDOW_SIZE_SECONDS;
-          my_target_epoch += WINDOW_SIZE_SECONDS;
-      }
-      
-      // Use the cycle start to guarantee a different jitter on every new 25h cycle
-      // without using SPI hardware RNG.
       int32_t random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
-      
-      // Compute the target in signed space so a negative result never wraps silently,
-      // then clamp so the wait is always strictly positive (guards against uint32 underflow).
       int64_t target_epoch = (int64_t)my_target_epoch + random_jitter;
-      if (target_epoch <= (int64_t)now_epoch) {
-          target_epoch = (int64_t)now_epoch + 1;
+      
+      // If the calculated target for the current cycle is already in the past or exactly right now,
+      // we must advance to the next cycle to avoid firing multiple times in a row!
+      if ((int64_t)now_epoch >= target_epoch) {
+          current_cycle_start += WINDOW_SIZE_SECONDS;
+          my_target_epoch = current_cycle_start + my_offset;
+          
+          // Re-calculate jitter for the new cycle!
+          random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
+          target_epoch = (int64_t)my_target_epoch + random_jitter;
       }
+      
+      // We are now guaranteed that target_epoch is strictly greater than now_epoch
       uint32_t wait_seconds = (uint32_t)(target_epoch - (int64_t)now_epoch);
       DateTime dt_target((uint32_t)target_epoch);
 
