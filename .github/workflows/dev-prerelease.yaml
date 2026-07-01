@@ -46,6 +46,15 @@ jobs:
 
           echo "Current LUSOFW_FIRMWARE_VERSION: ${VERSION}"
 
+          # Only cut a dev prerelease when the version is itself a release
+          # candidate (e.g. v1.2.3-rc1, v1.2.3-rc2). Stable or plain dev
+          # versions are left alone.
+          if [[ ! "${VERSION}" =~ -rc[0-9]+ ]]; then
+            echo "Version ${VERSION} is not a release candidate (-rc<N>); skipping prerelease."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # A new prerelease is cut only when the version (without the git hash)
           # has no prerelease yet. Candidate tags are gathered from *both* GitHub
           # releases and the raw remote tags, so a transient `gh` API hiccup

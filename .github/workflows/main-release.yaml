@@ -1,41 +1,93 @@
-name: Build lusofw
+name: Build lusofw (main release)
 
 permissions:
   contents: write
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  guard:
+  check:
     runs-on: ubuntu-latest
     outputs:
-      on_main: ${{ steps.check.outputs.on_main }}
+      should_run: ${{ steps.decide.outputs.should_run }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
 
-      - name: Verify tagged commit is on main
-        id: check
+      - name: Decide whether to cut a new main release
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git fetch origin main
-          if git merge-base --is-ancestor HEAD origin/main; then
-            echo "Tagged commit is reachable from main."
-            echo "on_main=true" >> "$GITHUB_OUTPUT"
+
+          VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+            sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
+
+          if [[ -z "${VERSION}" ]]; then
+            echo "Failed to extract LUSOFW_FIRMWARE_VERSION from examples/simple_repeater/MyMesh.h"
+            exit 1
+          fi
+
+          # Ensure the version (and therefore the tag) always carries a "v" prefix.
+          if [[ "${VERSION}" != v* ]]; then
+            VERSION="v${VERSION}"
+          fi
+
+          echo "Current LUSOFW_FIRMWARE_VERSION: ${VERSION}"
+
+          # Skip cutting a main release when the version is a release
+          # candidate (e.g. v1.2.3-rc1, v1.2.3-rc2). Only non-rc versions
+          # are allowed to proceed.
+          if [[ "${VERSION}" =~ -rc[0-9]+ ]]; then
+            echo "Version ${VERSION} is a release candidate (-rc<N>); skipping release."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # A new main release is cut only when no release/tag exists for this
+          # version yet. Candidate tags are gathered from *both* GitHub
+          # releases and the raw remote tags, so a transient `gh` API hiccup
+          # can't make us miss an existing release and cut a duplicate.
+          #
+          # A tag belongs to ${VERSION} when it equals ${VERSION} exactly or
+          # starts with "${VERSION}-" (the ${VERSION}-<sha> form produced by the
+          # release job). Matching is literal (awk index/==, not regex) so dots
+          # in the version are treated as literals and rc2 does not falsely
+          # match rc20.
+          ALL_TAGS="$({
+            gh release list --json tagName -L 200 \
+              --jq '.[].tagName' 2>/dev/null || true
+            git ls-remote --tags origin 2>/dev/null \
+              | sed -E 's#.*refs/tags/##; s/\^\{\}$//' || true
+          } | sort -u)"
+
+          EXISTING="$(awk -v v="${VERSION}" '
+            $0 == v || index($0, v "-") == 1 { print }
+          ' <<< "${ALL_TAGS}")"
+
+          if [[ -n "${EXISTING}" ]]; then
+            echo "Existing release(s)/tag(s) for ${VERSION}:"
+            echo "${EXISTING}"
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Tagged commit is NOT on main; skipping release."
-            echo "on_main=false" >> "$GITHUB_OUTPUT"
+            echo "No release exists yet for ${VERSION}; will build."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
           fi
 
   build:
-    needs: guard
-    if: needs.guard.outputs.on_main == 'true'
+    needs: check
+    if: needs.check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 15
@@ -139,9 +191,9 @@ jobs:
           path: out
 
   release:
-    needs: [guard, build]
+    needs: [check, build]
+    if: needs.check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    if: needs.guard.outputs.on_main == 'true'
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
@@ -152,8 +204,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
-          echo "CHANGELOG_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
+          LUSOFW_FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+            sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          if [[ -z "${LUSOFW_FIRMWARE_VERSION}" ]]; then
+            echo "Failed to extract LUSOFW_FIRMWARE_VERSION from examples/simple_repeater/MyMesh.h"
+            exit 1
+          fi
+
+          # Ensure the version (and therefore the tag) always carries a "v" prefix.
+          if [[ "${LUSOFW_FIRMWARE_VERSION}" != v* ]]; then
+            LUSOFW_FIRMWARE_VERSION="v${LUSOFW_FIRMWARE_VERSION}"
+          fi
+
+          echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Create and push release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Tag ${RELEASE_TAG} already exists on remote; reusing it."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "${RELEASE_TAG}"
+            git push origin "${RELEASE_TAG}"
+          fi
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -211,4 +292,3 @@ jobs:
           draft: false
           prerelease: false
           files: out/*
-
