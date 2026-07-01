@@ -1,5 +1,45 @@
 # Changelog
 
+## [v2026.7.1] - 01/07/2026
+
+Based on MeshCore v1.16.0
+main@e8d3c53ba1ea863937081cd0caad759b832f3028
+
+### Features
+
+- Added SHTC3 temperature/humidity sensor support (fixed I²C address 0x70) to the environment-sensor manager.
+- Added smart adverts: deterministic, collision-resistant flood-advert scheduling over a rolling 23h window, with each node's slot derived from its name and public key plus per-cycle jitter.
+- Disabled the per-hop probabilistic forwarding filter (`P(h)=0.308^(hops-1)`) that randomly dropped flood adverts as they propagated.
+- Implemented hardware Channel Activity Detection (CAD) listen-before-talk before each transmit, enabled by default (Cherry-picked upstream PR #1727).
+- Loop detection is now enabled by default at `LOOP_DETECT_MINIMAL` sensitivity (previously off).
+- Outbound packets are now expired and dropped once they exceed the maximum queue age (`MAX_PACKET_QUEUE_AGE_MS`).
+- Reverted the default airtime (duty-cycle) factor to 1.0, i.e. a 50% duty cycle, rolling back the prior setting that caused internationalization-related issues.
+- The repeater home screen now surfaces battery charge as an intuitive percentage, so remaining power can be read at a glance.
+- The repeater path-hash mode now defaults to 2 bytes (`path_hash_mode=1`), up from 1 byte.
+
+### Client
+
+- Implemented hardware Channel Activity Detection (CAD) listen-before-talk before each transmit, enabled by default (Cherry-picked upstream PR #1727).
+- Rendered the T114 boot logo as a true-color RGB image at its native panel resolution (192×54).
+- Shrunk the T114 battery indicator icon to 16×8 logical pixels.
+- Switched the T114 ST7789 font to DejaVu Sans UI.
+- The client path-hash mode now defaults to 2 bytes (`path_hash_mode=1`), up from 1 byte.
+
+### Security
+
+- Fixed network time replay vulnerability; reject time-source timestamps not newer than the last accepted one.
+- Enforce initial sync (forward-only) vs maintenance sync (±60s), replacing the symmetric ±30s logic that allowed backward clock moves.
+
+### Improvements
+
+- Updated MeshCore website links and logo placement across the UI and splash screens.
+
+### KTLO
+
+- Added `--upload ` argument to `build.sh` to compile and upload firmware in a single command.
+- Increased the GitHub Actions parallel job limit and updated the PlatformIO dependencies.
+- Removed the `ENABLE_CONSENSUS_TIME_SYNC` feature from the codebase.
+
 ## [v2026.5.2] - 25/05/2026
 
 Based on MeshCore v1.15.0

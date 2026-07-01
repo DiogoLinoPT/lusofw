@@ -60,14 +60,10 @@
 
 #define LAZY_CONTACTS_WRITE_DELAY    5000
 
-#define NEIGHBOUR_EXPIRATION_SECS    (60 * 60 * 24 * 2) // 2 days
-
-#define ADVERTS_ALLOWED_START        2 // hours >=
-#define ADVERTS_ALLOWED_END          5 // hours <=
-#define ADVERTS_ALLOWED_COUNT        1
-
 void MyMesh::putNeighbour(const mesh::Identity &id, uint32_t timestamp, float snr) {
 #if MAX_NEIGHBOURS // check if neighbours enabled
+#define NEIGHBOUR_EXPIRATION_SECS (60 * 60 * 24 * 2) // 2 days
+
   uint32_t now = getRTCClock()->getCurrentTime();
   for (int i = 0; i < MAX_NEIGHBOURS; i++) {
     // Cleanup old neighbours
@@ -100,112 +96,6 @@ void MyMesh::putNeighbour(const mesh::Identity &id, uint32_t timestamp, float sn
   neighbour->snr = (int8_t)(snr * 4);
 #endif
 }
-
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-/**
- * Apply time consensus algorithm to synchronize local clock with mesh peers.
- * 
- * This function collects time offset samples from neighboring peers (recorded
- * when receiving their advertisements) and computes a consensus adjustment.
- * 
- * Algorithm overview:
- * 1. Collect valid time offset samples from time_samples[] array
- * 2. Sort offsets to enable outlier removal
- * 3. Calculate trimmed mean (discard 25% from each end) to reject outliers
- * 4. Apply adjustment with different rules for initial vs maintenance sync
- * 
- * Two sync modes:
- * - INITIAL SYNC: When local clock is before 2026-01-01 (1767225600), the RTC
- *   has not been set. Allow unlimited forward adjustment to catch up with the
- *   network, but never go backward.
- * - MAINTENANCE SYNC: Clock is valid, apply symmetric ±60 second limits to
- *   prevent large jumps while allowing correction of both fast and slow drift.
- * 
- * The trimmed mean approach (vs simple median) provides better noise rejection
- * when we have multiple samples, as it averages the central values while
- * discarding extreme outliers on both ends.
- * 
- * Time samples are collected in onAdvertRecv() from peer advertisements.
- * Each sample represents: peer_timestamp - local_timestamp at time of receipt.
- */
-void MyMesh::applyTimeConsensus() {
-  uint32_t now = getRTCClock()->getCurrentTime();
-  
-  // Determine sync mode based on whether clock has been set to a reasonable time
-  // 1767225600 = 2026-01-01 00:00:00 UTC (matches filter in onAdvertRecv)
-  bool is_initial_sync = (now < 1767225600);
-  
-  int32_t valid_offsets[TIME_SYNC_SAMPLES];
-  int valid_count = 0;
-  
-  // Collect valid time offset samples (offset > 0 means peer is ahead of us)
-  for (int i = 0; i < TIME_SYNC_SAMPLES; i++) {
-    if (time_samples[i].sampled_at > 0) {
-      valid_offsets[valid_count++] = time_samples[i].offset;
-    }
-  }
-  
-  // Minimum sample requirement depends on sync mode:
-  // - Initial sync: 5 samples (sync faster to catch up with network)
-  // - Maintenance sync: full TIME_SYNC_SAMPLES for more reliable consensus
-  int min_samples = is_initial_sync ? 5 : TIME_SYNC_SAMPLES;
-  if (valid_count < min_samples) return;
-
-  // Bubble sort offsets to enable trimmed mean calculation
-  for (int i = 0; i < valid_count - 1; i++) {
-    for (int j = 0; j < valid_count - i - 1; j++) {
-      if (valid_offsets[j] > valid_offsets[j + 1]) {
-        int32_t temp = valid_offsets[j];
-        valid_offsets[j] = valid_offsets[j + 1];
-        valid_offsets[j + 1] = temp;
-      }
-    }
-  }
-  
-  // Calculate trimmed mean: discard 25% from each end to remove outliers
-  // With 8 samples: trim=2, use indices [2,3,4,5] = middle 4 samples
-  // With 5 samples: trim=1, use indices [1,2,3] = middle 3 samples
-  int trim = valid_count / 4;
-  int32_t sum = 0;
-  int trimmed_count = 0;
-  for (int i = trim; i < valid_count - trim; i++) {
-    sum += valid_offsets[i];
-    trimmed_count++;
-  }
-  
-  int32_t consensus = sum / trimmed_count;
-  int32_t adjustment = consensus;
-  
-  if (is_initial_sync) {
-    // INITIAL SYNC: Clock likely unset (still at default ~2024)
-    // Allow large forward jump to sync with network
-    // Never go backward - we might have partial time from a previous sync
-    if (consensus <= 0) {
-      adjustment = 0;
-    }
-    // Positive adjustments are uncapped - we need to catch up potentially years
-  } else {
-    // MAINTENANCE SYNC: Clock is valid, apply conservative limits
-    // Cap adjustments to ±60 seconds to prevent large jumps from
-    // malicious peers or temporary network issues
-    if (adjustment > 60) adjustment = 60;
-    if (adjustment < -60) adjustment = -60;
-  }
-  
-  // Apply adjustment if it exceeds the deadband threshold (±5 seconds)
-  // Small adjustments are ignored to prevent clock thrashing
-  if (adjustment != 0 && (adjustment > 5 || adjustment < -5)) {
-    getRTCClock()->setCurrentTime(now + adjustment);
-
-    // Clear all samples to force fresh collection - old offsets are now stale
-    memset(time_samples, 0, sizeof(time_samples));
-    time_sample_idx = 0;
-    
-    MESH_DEBUG_PRINTLN("Time sync: adjusted %d sec (consensus=%d, samples=%d, initial=%d)", 
-                       adjustment, consensus, valid_count, is_initial_sync);
-  }
-}
-#endif
 
 uint8_t MyMesh::handleLoginReq(const mesh::Identity& sender, const uint8_t* secret, uint32_t sender_timestamp, const uint8_t* data, bool is_flood) {
   ClientInfo* client = NULL;
@@ -549,7 +439,11 @@ void MyMesh::sendFloodReply(mesh::Packet* packet, unsigned long delay_millis, ui
 
 bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
   if (_prefs.disable_fwd) return false;
-  if (packet->isRouteFlood() && packet->getPathHashCount() >= _prefs.flood_max) return false;
+  if (packet->isRouteFlood()) {
+    if (packet->getPathHashCount() >= _prefs.flood_max) return false;
+    if (packet->getRouteType() == ROUTE_TYPE_FLOOD && packet->getPathHashCount() >= _prefs.flood_max_unscoped) return false;
+    if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->getPathHashCount() >= _prefs.flood_max_advert) return false;
+  }
   if (packet->isRouteFlood() && recv_pkt_region == NULL) {
     MESH_DEBUG_PRINTLN("allowPacketForward: unknown transport code, or wildcard not allowed for FLOOD packet");
     return false;
@@ -569,7 +463,11 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     }
   }
 
-#ifdef DISABLE_LEGACY_ADVERT
+#if 0
+#ifdef DISABLE_LEGACY_ADVERT 
+#define ADVERTS_ALLOWED_START 0  // hours >=
+#define ADVERTS_ALLOWED_END   23 // hours <=
+
   // Limit flood advert paket forwarding using a probabilistic reduction defined by P(h) = 0.308^(hops-1)
   // https://github.com/meshcore-dev/MeshCore/issues/1223
   if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->isRouteFlood()) {
@@ -586,12 +484,12 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     // Advert payload structure: [pub_key(32)][timestamp(4)][signature(64)][app_data...]
     const int app_data_offset = PUB_KEY_SIZE + 4 + SIGNATURE_SIZE; // 32 + 4 + 64 = 100
 
-    // Extract advert type from app_data (lower 4 bits of first byte).
+    // Extract the advert type from app_data (the lower 4 bits of the first byte).
     uint8_t adv_type = (packet->payload_len > app_data_offset) ? (packet->payload[app_data_offset] & 0x0F) : 0xFF;
 
-    // Reject adverts from repeaters whose pub_key starts with 0x01 (MOBILE NODE)
+    // Reject adverts from repeaters whose pub_key starts with 0x01 (mobile node).
     if (packet->payload_len > 0 && adv_type == ADV_TYPE_REPEATER && packet->payload[0] == 0x01) {
-      MESH_DEBUG_PRINTLN("Flood advert REJECTED: pub_key starts with 0x01 for repeater");
+      MESH_DEBUG_PRINTLN("Flood advert rejected: pub_key starts with 0x01 for repeater");
       return false;
     }
 
@@ -632,6 +530,24 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
 #endif
   }
 #endif
+#endif
+
+  // FIXME: Temporary patch to reject flood adverts from repeaters whose pub_key starts with 0x01 (mobile node).
+  // Remove this block when probabilistic flood advert filtering is enabled again.
+  if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->isRouteFlood()) {
+    // Advert payload structure: [pub_key(32)][timestamp(4)][signature(64)][app_data...]
+    const int app_data_offset = PUB_KEY_SIZE + 4 + SIGNATURE_SIZE; // 32 + 4 + 64 = 100
+
+    // Extract the advert type from app_data (the lower 4 bits of the first byte).
+    uint8_t adv_type =
+        (packet->payload_len > app_data_offset) ? (packet->payload[app_data_offset] & 0x0F) : 0xFF;
+
+    // Reject adverts from repeaters whose pub_key starts with 0x01 (mobile node).
+    if (packet->payload_len > 0 && adv_type == ADV_TYPE_REPEATER && packet->payload[0] == 0x01) {
+      MESH_DEBUG_PRINTLN("Flood advert rejected: pub_key starts with 0x01 for repeater");
+      return false;
+    }
+  }
 
   // all other packets
   return true;
@@ -822,84 +738,72 @@ void MyMesh::onAdvertRecv(mesh::Packet *packet, const mesh::Identity &id, uint32
   mesh::Mesh::onAdvertRecv(packet, id, timestamp, app_data, app_data_len); // chain to super impl
 
   // if this a zero hop advert (and not via 'Share'), add it to neighbours
-  if (packet->path_len == 0 && !isShare(packet)) {
+  if (packet->getPathHashCount() == 0 && !isShare(packet)) {
     AdvertDataParser parser(app_data, app_data_len);
     if (parser.isValid() && parser.getType() == ADV_TYPE_REPEATER) { // just keep neigbouring Repeaters
       putNeighbour(id, timestamp, packet->getSNR());
     }
   }
 
-#ifdef ENABLE_MASTER_TIME_SYNC
-  static const uint8_t MASTER_TIME_SYNC_IDENTITY[PUB_KEY_SIZE] = {
+#ifdef ENABLE_NETWORK_TIME
+  // Trusted network time source identity. Only adverts signed by this Ed25519 key are
+  // honoured as a time source. The advert signature (covers pubkey + timestamp +
+  // appdata) authenticates the packet, but cannot by itself stop REPLAY of a
+  // previously captured, validly-signed advert -- that is handled below.
+  static const uint8_t NETWORK_TIME_IDENTITY[PUB_KEY_SIZE] = {
     0x01, 0xB2, 0xF5, 0xDA, 0x46, 0xBC, 0x0A, 0x9C, 0x67, 0xFB, 0x8E, 0xDC, 0x36, 0x62, 0x57, 0xB6,
     0x04, 0x52, 0x73, 0xB8, 0x9F, 0x37, 0xF3, 0x08, 0x04, 0x4A, 0xD5, 0x57, 0x17, 0x34, 0xD4, 0x62
   };
 
-  // ignore timestamps before year 2026 (Unix timestamp 1767225600)
+  // Reject implausible timestamps (anything before year 2026 = 1767225600) and
+  // only trust time sources heard within 8 hops (limits propagation skew/abuse).
   if (timestamp >= 1767225600 && packet->path_len < 8) {
     AdvertDataParser parser(app_data, app_data_len);
     if (parser.isValid() && parser.getType() == ADV_TYPE_NONE) {
-      if (memcmp(id.pub_key, MASTER_TIME_SYNC_IDENTITY, PUB_KEY_SIZE) == 0) {
-        uint32_t now = getRTCClock()->getCurrentTime();
-        int32_t diff = (int32_t)timestamp - (int32_t)now;
-        if (diff >= 30 || diff <= -30) {
-          getRTCClock()->setCurrentTime(timestamp);
-          DateTime dt = DateTime(timestamp);
-          MESH_DEBUG_PRINTLN("Master time sync: clock updated to %02d:%02d:%02d - %d/%d/%d (diff=%d sec)",
-                             dt.hour(), dt.minute(), dt.second(), dt.day(), dt.month(), dt.year(), diff);
+      if (memcmp(id.pub_key, NETWORK_TIME_IDENTITY, PUB_KEY_SIZE) == 0) {
+
+        // --- Anti-replay: only accept timestamps strictly newer than the last
+        // one we ACCEPTED this boot. A captured advert re-broadcast later still
+        // carries an old (<=) timestamp and is dropped here. last_network_sync_time
+        // is RAM-only; cross-reboot safety comes from the initial-sync forward-only
+        // rule below together with the battery-backed RTC (an old replayed ts is
+        // < the preserved RTC time and so fails the forward check after reboot).
+        if (last_network_sync_time != 0 && timestamp <= last_network_sync_time) {
+          MESH_DEBUG_PRINTLN("Network time: REPLAY rejected (ts=%u <= last=%u)",
+                             timestamp, last_network_sync_time);
         } else {
-          MESH_DEBUG_PRINTLN("Master time sync: ignored small diff=%d sec (threshold=30)", diff);
+          uint32_t now = getRTCClock()->getCurrentTime();
+          int32_t diff = (int32_t)timestamp - (int32_t)now;
+
+          // INITIAL sync = RTC not yet set (before 2026) OR no network time sync
+          // accepted yet this boot. MAINTENANCE sync = already synced.
+          //   - INITIAL    : accept any unlimited FORWARD jump (diff > 0) only.
+          //                  Rejecting backward jumps closes the replay/winding
+          //                  hole that allowed rolling the clock back in time.
+          //   - MAINTENANCE: allow only a small +/-60s correction (matches the
+          //                  CHANGELOG). A synced RTC should only drift by
+          //                  seconds; large jumps here are treated as suspicious.
+          bool initial = (now < 1767225600) || (last_network_sync_time == 0);
+          bool apply = initial ? (diff > 0) : (diff >= -60 && diff <= 60);
+
+          if (apply) {
+            getRTCClock()->setCurrentTime(timestamp);
+            last_network_sync_time = timestamp;  // advance high-water mark (accepted)
+            DateTime dt = DateTime(timestamp);
+            MESH_DEBUG_PRINTLN("Network time: %s apply, diff=%d sec -> %02d:%02d:%02d %d/%d/%d",
+                               initial ? "INITIAL" : "maintenance", diff,
+                               dt.hour(), dt.minute(), dt.second(), dt.day(), dt.month(), dt.year());
+            updateFloodAdvertTimer();  // reschedule smart advert against new clock (cf. name change)
+          } else {
+            MESH_DEBUG_PRINTLN("Network time: %s rejected (diff=%d sec)",
+                               initial ? "initial(not-forward)" : "maintenance(outside +/-60)", diff);
+          }
         }
       } else {
-        MESH_DEBUG_PRINTLN("Master time sync: invalid ID [%02X%02X], ignoring timestamp", id.pub_key[0],
+        MESH_DEBUG_PRINTLN("Network time: invalid ID [%02X%02X], ignoring timestamp", id.pub_key[0],
                            id.pub_key[1]);
       }
     }
-  }
-#endif
-
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-  // limit time sync samples to 4 hops max
-  // ignore timestamps before year 2026 (Unix timestamp 1767225600)
-  if (timestamp >= 1767225600 && packet->path_len < 8 && !isShare(packet)) {
-    uint32_t now = getRTCClock()->getCurrentTime();
-    bool found = false;
-    for (int i = 0; i < TIME_SYNC_SAMPLES; i++) {
-      if (memcmp(time_samples[i].sender_prefix, id.pub_key, 4) == 0) {
-        if (now - time_samples[i].sampled_at > 3600) {
-          time_samples[i].offset = (int32_t)timestamp - (int32_t)now;
-          time_samples[i].sampled_at = now;
-          DateTime dt = DateTime(timestamp);
-          MESH_DEBUG_PRINTLN("Time sample updated: [%02X%02X] %02d:%02d:%02d - %d/%d/%d offset=%d",
-                             id.pub_key[0], id.pub_key[1], dt.hour(), dt.minute(), dt.second(), dt.day(),
-                             dt.month(), dt.year(), time_samples[i].offset);
-        }
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      memcpy(time_samples[time_sample_idx].sender_prefix, id.pub_key, 4);
-      time_samples[time_sample_idx].offset = (int32_t)timestamp - (int32_t)now;
-      time_samples[time_sample_idx].sampled_at = now;
-      DateTime dt = DateTime(timestamp);
-      MESH_DEBUG_PRINTLN("Time sample added: [%02X%02X] %02d:%02d:%02d - %d/%d/%d offset=%d idx=%d",
-                         id.pub_key[0], id.pub_key[1], dt.hour(), dt.minute(), dt.second(), dt.day(),
-                         dt.month(), dt.year(), time_samples[time_sample_idx].offset, time_sample_idx);
-      time_sample_idx = (time_sample_idx + 1) % TIME_SYNC_SAMPLES;
-    }
-#if MESH_DEBUG
-  } else if (packet->path_len > 0 && !isShare(packet)) {
-    // Log why advert was rejected for time sync
-    if (timestamp < 1767225600) {
-      DateTime dt = DateTime(timestamp);
-      MESH_DEBUG_PRINTLN("Time sample rejected: [%02X%02X] timestamp too old (%d/%d/%d)",
-                         id.pub_key[0], id.pub_key[1], dt.day(), dt.month(), dt.year());
-    } else if (packet->path_len >= 6) {
-      MESH_DEBUG_PRINTLN("Time sample rejected: [%02X%02X] too many hops (%d)",
-                         id.pub_key[0], id.pub_key[1], packet->path_len);
-    }
-#endif
   }
 #endif
 }
@@ -1031,8 +935,13 @@ bool MyMesh::onPeerPathRecv(mesh::Packet *packet, int sender_idx, const uint8_t 
 #define CTL_TYPE_NODE_DISCOVER_RESP  0x90
 
 void MyMesh::onControlDataRecv(mesh::Packet *packet) {
-#if !defined(ENABLE_STEALTH_MODE)
+  if (packet->payload_len < 1) {
+    return;
+  }
+
   uint8_t type = packet->payload[0] & 0xF0; // just test upper 4 bits
+
+#if !defined(ENABLE_STEALTH_MODE)
   if (type == CTL_TYPE_NODE_DISCOVER_REQ && packet->payload_len >= 6 && !_prefs.disable_fwd &&
       discover_limiter.allow(rtc_clock.getCurrentTime())) {
     int i = 1;
@@ -1127,8 +1036,9 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   uptime_millis = 0;
   
   adverts_sent = 0;
+  last_network_sync_time = 0;  // no network time sync accepted yet this boot
   next_advert_check = futureMillis(30000);
-  next_local_advert = next_flood_advert = next_flood_advert_offset = 0;
+  next_local_advert = next_flood_advert = 0;
 
   dirty_contacts_expiry = 0;
   set_radio_at = revert_radio_at = 0;
@@ -1139,17 +1049,11 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
       memset(neighbours, 0, sizeof(neighbours));
 #endif
 
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-      memset(time_samples, 0, sizeof(time_samples));
-      time_sample_idx = 0;
-      next_time_sync = 0;
-#endif
-
   // defaults
   memset(&_prefs, 0, sizeof(_prefs));
-  _prefs.airtime_factor = 9.0;   // default to 10% duty cycle
-  _prefs.rx_delay_base = 0.0f;   // turn off by default, was 10.0;
-  _prefs.tx_delay_factor = 0.5f; // was 0.25f
+  _prefs.airtime_factor = 1.0;
+  _prefs.rx_delay_base = 0.0f;          // turn off by default, was 10.0;
+  _prefs.tx_delay_factor = 0.5f;        // was 0.25f
   _prefs.direct_tx_delay_factor = 0.3f; // was 0.2
   StrHelper::strncpy(_prefs.node_name, ADVERT_NAME, sizeof(_prefs.node_name));
   _prefs.node_lat = ADVERT_LAT;
@@ -1160,23 +1064,22 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   _prefs.bw = LORA_BW;
   _prefs.cr = LORA_CR;
   _prefs.tx_power_dbm = LORA_TX_POWER;
-  _prefs.advert_interval = 0;        // defaults to disabled on lusofw
-  _prefs.flood_advert_interval = 24; // defaults to 24h on lusofw, when >0 enabled our custom advert handling
-  _prefs.flood_advert_base = 0.308f;
+  _prefs.advert_interval = 1;        // default to 2 minutes for NEW installs
+  _prefs.flood_advert_interval = 47; // 47 hours
   _prefs.flood_max = 64;
-  _prefs.interference_threshold = 14; // enable listen before talk
+  _prefs.flood_max_unscoped = 64;
+  _prefs.flood_max_advert = 8;
+  _prefs.interference_threshold = 0; // disabled
+  _prefs.cad_enabled = 0;            // hardware CAD before TX (off by default; 'set cad on')
 
   // bridge defaults
-  _prefs.bridge_enabled = 1;    // enabled
-  _prefs.bridge_delay   = 500;  // milliseconds
-  _prefs.bridge_pkt_src = 0;    // logTx
-  _prefs.bridge_baud = 57600;   // baud rate
-  _prefs.bridge_channel = 1;    // channel 1
+  _prefs.bridge_enabled = 1;   // enabled
+  _prefs.bridge_delay = 500;   // milliseconds
+  _prefs.bridge_pkt_src = 0;   // logTx
+  _prefs.bridge_baud = 115200; // baud rate
+  _prefs.bridge_channel = 1;   // channel 1
 
   StrHelper::strncpy(_prefs.bridge_secret, "LVSITANOS", sizeof(_prefs.bridge_secret));
-
-  // loop detect defaults
-  _prefs.loop_detect = LOOP_DETECT_MINIMAL;
 
   // GPS defaults
   _prefs.gps_enabled = 0;
@@ -1206,11 +1109,13 @@ void MyMesh::begin(FILESYSTEM *fs) {
   _cli.loadPrefs(_fs);
 
   char oldVersion[32];
-  FirmwareMigration::readVersion(_fs, oldVersion, sizeof(oldVersion));
+  LusoDefaults::readVersion(_fs, oldVersion, sizeof(oldVersion));
   if (strcmp(oldVersion, LUSOFW_FIRMWARE_VERSION) != 0) {
-    FirmwareMigration::applyDefaultsByVersion(oldVersion, LUSOFW_FIRMWARE_VERSION, _prefs);
+    LusoDefaults::applyDefaults(_prefs);
     _cli.savePrefs(_fs);
-    FirmwareMigration::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
+    LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
+    delay(1000);
+    board.reboot();  // doesn't return
   }
 
   acl.load(_fs, self_id);
@@ -1254,8 +1159,8 @@ void MyMesh::begin(FILESYSTEM *fs) {
   }
 #endif
 
-  radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
-  radio_set_tx_power(_prefs.tx_power_dbm);
+  radio_driver.setParams(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
+  radio_driver.setTxPower(_prefs.tx_power_dbm);
 
   radio_driver.setRxBoostedGainMode(_prefs.rx_boosted_gain);
   MESH_DEBUG_PRINTLN("RX Boosted Gain Mode: %s",
@@ -1264,10 +1169,6 @@ void MyMesh::begin(FILESYSTEM *fs) {
 #ifndef DISABLE_LEGACY_ADVERT
   updateAdvertTimer();
   updateFloodAdvertTimer();
-#endif
-
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-  next_time_sync = futureMillis(300000);
 #endif
 
   board.setAdcMultiplier(_prefs.adc_multiplier);
@@ -1345,18 +1246,60 @@ void MyMesh::updateFloodAdvertTimer() {
     next_flood_advert = 0; // stop the timer
   }
 #else
-  const uint32_t interval_upper_bound =
-      ((ADVERTS_ALLOWED_END - ADVERTS_ALLOWED_START + 1) * 60 * 60 / ADVERTS_ALLOWED_COUNT) - 60;
-  const uint32_t interval_lower_bound = 60; // 1 minute
+  const uint32_t WINDOW_SIZE_SECONDS = 23 * 3600; // 23 hours (Rolling Window)
+  const int32_t JITTER_MAX_SECONDS = 3; // 3 seconds Jitter to prevent advert collisions
 
-  uint32_t interval = getRNG()->nextInt(interval_lower_bound, interval_upper_bound);
-  next_flood_advert = futureMillis((interval + next_flood_advert_offset) * 1000);
+  // Calculate a deterministic hash using the native SHA256 utility.
+  // This ensures the hash is uniform and unique per node based on its name and public key.
+  uint32_t hash = 0;
+  const char* name = _prefs.node_name ? _prefs.node_name : "";
 
-  MESH_DEBUG_PRINTLN(
-      "%s updateFloodAdvertTimer: lower=%u, upper=%u, selected=%u, offset=%u (sec)",
-      getLogDateTime(), interval_lower_bound, interval_upper_bound, interval, next_flood_advert_offset);
+  mesh::Utils::sha256((uint8_t*)&hash, sizeof(hash), (const uint8_t*)name, strlen(name), self_id.pub_key, 4);
 
-  next_flood_advert_offset = interval_upper_bound - interval;
+  uint32_t my_offset = hash % WINDOW_SIZE_SECONDS;
+  uint32_t now_epoch = getRTCClock()->getCurrentTime();
+
+  // If there is no RTC (timestamp is older than Jan 1, 2020), we rely on millis() + offset + jitter
+  if (now_epoch < 1577836800) {
+      // Use uptime millis to give dynamic jitter across reboots when no RTC is present
+      int32_t random_jitter = ((hash ^ millis()) % 7) - 3;
+      uint32_t fallback_wait = my_offset + random_jitter;
+      // Prevent underflow
+      if ((int32_t)fallback_wait < 0) {
+          fallback_wait = 0;
+      }
+      next_flood_advert = futureMillis(fallback_wait * 1000);
+  } else {
+      // If we have an RTC, schedule for the next occurrence in the global calendar
+      uint32_t current_cycle_start = now_epoch - (now_epoch % WINDOW_SIZE_SECONDS);
+      uint32_t my_target_epoch = current_cycle_start + my_offset;
+      int32_t random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
+      int64_t target_epoch = (int64_t)my_target_epoch + random_jitter;
+      
+      // If the calculated target for the current cycle is already in the past or exactly right now,
+      // we must advance to the next cycle to avoid firing multiple times in a row!
+      if ((int64_t)now_epoch >= target_epoch) {
+          current_cycle_start += WINDOW_SIZE_SECONDS;
+          my_target_epoch = current_cycle_start + my_offset;
+          
+          // Re-calculate jitter for the new cycle!
+          random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
+          target_epoch = (int64_t)my_target_epoch + random_jitter;
+      }
+      
+      // We are now guaranteed that target_epoch is strictly greater than now_epoch
+      uint32_t wait_seconds = (uint32_t)(target_epoch - (int64_t)now_epoch);
+      DateTime dt_target((uint32_t)target_epoch);
+
+      MESH_DEBUG_PRINTLN(
+          "%s Next smart advert will be at %04d-%02d-%02d %02d:%02d:%02d (in %d seconds)",
+          getLogDateTime(), 
+          dt_target.year(), dt_target.month(), dt_target.day(), 
+          dt_target.hour(), dt_target.minute(), dt_target.second(),
+          wait_seconds);
+
+      next_flood_advert = futureMillis(wait_seconds * 1000);
+  }
 #endif
 }
 
@@ -1377,7 +1320,7 @@ void MyMesh::dumpLogFile() {
 }
 
 void MyMesh::setTxPower(int8_t power_dbm) {
-  radio_set_tx_power(power_dbm);
+  radio_driver.setTxPower(power_dbm);
 }
 
 #if defined(USE_SX1262) || defined(USE_SX1268)
@@ -1470,7 +1413,7 @@ void MyMesh::formatRadioStatsReply(char *reply) {
 
 void MyMesh::formatPacketStatsReply(char *reply) {
   StatsFormatHelper::formatPacketStats(reply, radio_driver, getNumSentFlood(), getNumSentDirect(), 
-                                       getNumRecvFlood(), getNumRecvDirect());
+                                       getNumRecvFlood(), getNumRecvDirect(), getNumExpired());
 }
 
 void MyMesh::saveIdentity(const mesh::LocalIdentity &new_id) {
@@ -1606,61 +1549,35 @@ void MyMesh::loop() {
   }
 #else
   if (next_advert_check && millisHasNowPassed(next_advert_check)) {
-    next_advert_check = futureMillis(10 * 1000); // check every 10 seconds
+    next_advert_check = futureMillis(1 * 1000); // check every 1 second
 
-    uint32_t now = getRTCClock()->getCurrentTime();
-    DateTime dt = DateTime(now);
-    uint8_t current_hour = dt.hour();
-
-    if (current_hour >= ADVERTS_ALLOWED_START && current_hour <= ADVERTS_ALLOWED_END) {
-      MESH_DEBUG_PRINTLN("%s AdvertWindowCheck: hour=%d, adverts_sent=%d/%d, scheduled=%d, wait=%d",
-                         getLogDateTime(), current_hour, adverts_sent, ADVERTS_ALLOWED_COUNT,
-                         (next_flood_advert > 0), (next_flood_advert ? (int)(next_flood_advert - millis()) : 0));
-
-
-      if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
-        MESH_DEBUG_PRINTLN("%s Sending flood advert (%d/%d)", getLogDateTime(), adverts_sent + 1, ADVERTS_ALLOWED_COUNT);
+    if (_prefs.flood_advert_interval > 0) {
+      if (next_flood_advert == 0) {
+          updateFloodAdvertTimer();
+      } else if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
+        MESH_DEBUG_PRINTLN("%s MyMesh::loop(): Sending flood advert", getLogDateTime());
         mesh::Packet *pkt = createSelfAdvert();
         if (pkt) sendFlood(pkt);
         next_flood_advert = 0;
-        adverts_sent++;
-      }
-
-      if (adverts_sent >= ADVERTS_ALLOWED_COUNT) {
-        // already sent max allowed adverts in this period
-        MESH_DEBUG_PRINTLN("%s Max advert count reached (%d) for current period, skipping", getLogDateTime(),
-                           ADVERTS_ALLOWED_COUNT);
-        return;
       }
 
       // checks if flood adverts are disabled, or if we already have one scheduled, before scheduling next one
       if (next_flood_advert == 0 && _prefs.flood_advert_interval > 0) {
         updateFloodAdvertTimer();
       }
-    } else if (adverts_sent > 0) {
-      adverts_sent = 0;
-      next_flood_advert = 0;
-      next_flood_advert_offset = 0;
     }
-  }
-#endif
-
-#ifdef ENABLE_CONSENSUS_TIME_SYNC
-  if (next_time_sync && millisHasNowPassed(next_time_sync)) {
-    applyTimeConsensus();
-    next_time_sync = futureMillis(300000);
   }
 #endif
 
   if (set_radio_at && millisHasNowPassed(set_radio_at)) { // apply pending (temporary) radio params
     set_radio_at = 0;                                     // clear timer
-    radio_set_params(pending_freq, pending_bw, pending_sf, pending_cr);
+    radio_driver.setParams(pending_freq, pending_bw, pending_sf, pending_cr);
     MESH_DEBUG_PRINTLN("Temp radio params");
   }
 
   if (revert_radio_at && millisHasNowPassed(revert_radio_at)) { // revert radio params to orig
     revert_radio_at = 0;                                        // clear timer
-    radio_set_params(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
+    radio_driver.setParams(_prefs.freq, _prefs.bw, _prefs.sf, _prefs.cr);
     MESH_DEBUG_PRINTLN("Radio params restored");
   }
 

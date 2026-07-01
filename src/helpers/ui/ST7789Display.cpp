@@ -2,6 +2,20 @@
 
 #include "ST7789Display.h"
 
+#ifdef USE_NEW_FONT
+  #include "fonts/DejaVuSans_Plain_16.h"
+  #include "fonts/DejaVuSans_Plain_24.h"
+  // Switch the whole UI to DejaVu Sans (same ThingPulse font format, so
+  // drawString()/getStringWidth() keep working with no metric breakage).
+  #define UI_FONT_DEFAULT  DejaVuSans_Plain_16
+  #define UI_FONT_SIZE1    DejaVuSans_Plain_16
+  #define UI_FONT_SIZE2    DejaVuSans_Plain_24
+#else
+  #define UI_FONT_DEFAULT  ArialMT_Plain_16
+  #define UI_FONT_SIZE1    ArialMT_Plain_16
+  #define UI_FONT_SIZE2    ArialMT_Plain_24
+#endif
+
 #ifndef X_OFFSET
 #define X_OFFSET 0  // No offset needed for landscape
 #endif
@@ -80,19 +94,19 @@ void ST7789Display::startFrame(Color bkg) {
   display.clear();
   _color = ST77XX_WHITE;
   display.setRGB(_color);
-  display.setFont(ArialMT_Plain_16);
+  display.setFont(UI_FONT_DEFAULT);
 }
 
 void ST7789Display::setTextSize(int sz) {
   switch(sz) {
     case 1 :
-      display.setFont(ArialMT_Plain_16);
+      display.setFont(UI_FONT_SIZE1);
       break;
     case 2 :
-      display.setFont(ArialMT_Plain_24);
+      display.setFont(UI_FONT_SIZE2);
       break;
     default:
-      display.setFont(ArialMT_Plain_16);
+      display.setFont(UI_FONT_DEFAULT);
   }
 }
 
@@ -101,6 +115,10 @@ void ST7789Display::setColor(Color c) {
     case DisplayDriver::DARK :
       _color = ST77XX_BLACK;
       display.setColor(OLEDDISPLAY_COLOR::BLACK);
+      break;
+    case DisplayDriver::GRAY :
+      _color = 0x8410;   // ~50% gray RGB565 for secondary/boot text
+      display.setColor(OLEDDISPLAY_COLOR::WHITE);
       break;
 #if 0
     case DisplayDriver::LIGHT : 
@@ -189,6 +207,13 @@ void ST7789Display::drawXbm(int x, int y, const uint8_t* bits, int w, int h) {
 
 uint16_t ST7789Display::getTextWidth(const char* str) {
   return display.getStringWidth(str) / SCALE_X;
+}
+
+bool ST7789Display::drawRGBBitmap(int x, int y, int w, int h, const uint16_t* rgb565) {
+  // Panel-native coordinates (1:1, no SCALE) -- the whole point of this path is
+  // crisp, undistorted colour. Delegates straight to the SPI blit.
+  display.drawRGBBitmap(x, y, w, h, rgb565);
+  return true;
 }
 
 void ST7789Display::endFrame() {

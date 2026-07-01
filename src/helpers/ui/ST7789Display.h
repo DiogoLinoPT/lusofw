@@ -34,6 +34,7 @@ public:
   void fillRect(int x, int y, int w, int h) override;
   void drawRect(int x, int y, int w, int h) override;
   void drawXbm(int x, int y, const uint8_t* bits, int w, int h) override;
+  bool drawRGBBitmap(int x, int y, int w, int h, const uint16_t* rgb565) override;
   uint16_t getTextWidth(const char* str) override;
   void endFrame() override;
 };

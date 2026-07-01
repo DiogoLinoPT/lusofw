@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+UPLOAD_FIRMWARE=0
+ARGS=()
+
+for arg in "$@"; do
+  if [ "$arg" == "--upload" ] || [ "$arg" == "-u" ]; then
+    UPLOAD_FIRMWARE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+# override the script args with the filtered list
+set -- "${ARGS[@]}"
+
 global_usage() {
   cat - <<EOF
 Usage:
@@ -121,30 +135,41 @@ build_firmware() {
   ENV_PLATFORM=($(get_platform_for_env $1))
   # get git commit sha
   COMMIT_HASH=$(git rev-parse --short HEAD)
+  
+  # full git tag for firmware build, e.g: main-abcdef-dirty
+  FIRMWARE_GIT_TAG=${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
 
   # set firmware build date
   FIRMWARE_BUILD_DATE=$(date '+%d-%b-%Y')
 
-  # get FIRMWARE_VERSION, which should be provided by the environment
+  # get FIRMWARE_VERSION, which should be provided by the environment or extracted from code
   if [ -z "$FIRMWARE_VERSION" ]; then
-    echo "FIRMWARE_VERSION must be set in environment"
-    exit 1
+    export FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+      sed -E 's/^[[:space:]]*#define[[:space:]]+FIRMWARE_VERSION[[:space:]]+"v([0-9.]+)".*/v\1/')
+    if [ -z "$FIRMWARE_VERSION" ]; then
+      echo "FIRMWARE_VERSION could not be determined from environment or code"
+      exit 1
+    fi
   fi
 
-  # get LUSOFW_FIRMWARE_VERSION, which should be provided by the environment
+  # get LUSOFW_FIRMWARE_VERSION
   if [ -z "$LUSOFW_FIRMWARE_VERSION" ]; then
-    echo "LUSOFW_FIRMWARE_VERSION must be set in environment"
-    exit 1
+    export LUSOFW_FIRMWARE_VERSION=$(grep '^[[:space:]]*#define[[:space:]]\+LUSOFW_FIRMWARE_VERSION[[:space:]]\+"' examples/simple_repeater/MyMesh.h | \
+      sed -E 's/^[[:space:]]*#define[[:space:]]+LUSOFW_FIRMWARE_VERSION[[:space:]]+"([^"]+)".*/\1/')
+    if [ -z "$LUSOFW_FIRMWARE_VERSION" ]; then
+      echo "LUSOFW_FIRMWARE_VERSION could not be determined from environment or code"
+      exit 1
+    fi
   fi
 
   # set firmware version string
   # e.g: v1.0.0-abcdef
   FIRMWARE_VERSION_STRING="${LUSOFW_FIRMWARE_VERSION}-lusofw"
-  FIRMWARE_BUILD_DATE_STRING="${FIRMWARE_VERSION}"
+  FIRMWARE_BUILD_DATE_STRING="${FIRMWARE_GIT_TAG}"
 
   # craft filename
   # e.g: RAK_4631_Repeater-v1.0.0-SHA
-  FIRMWARE_FILENAME="$1-${LUSOFW_FIRMWARE_VERSION}-lusofw-${COMMIT_HASH}"
+  FIRMWARE_FILENAME="$1-${LUSOFW_FIRMWARE_VERSION}-lusofw-${FIRMWARE_GIT_TAG}"
 
   # add firmware version info to end of existing platformio build flags in environment vars
   export PLATFORMIO_BUILD_FLAGS="${PLATFORMIO_BUILD_FLAGS} -DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE_STRING}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"'"
@@ -181,6 +206,12 @@ build_firmware() {
     cp .pio/build/$1/firmware.uf2 out/${FIRMWARE_FILENAME}.uf2 2>/dev/null || true
   fi
 
+  if [ "$UPLOAD_FIRMWARE" == "1" ]; then
+    echo "=========================================="
+    echo "Starting Upload to the radio..."
+    echo "=========================================="
+    pio run -e $1 -t upload
+  fi
 }
 
 # firmwares containing $1 will be built
@@ -256,6 +287,10 @@ rm -rf out
 mkdir -p out
 
 # handle script args
+if [ "$UPLOAD_FIRMWARE" == "1" ] && [[ "$1" != "build-firmware" ]]; then
+  echo "Error: The --upload or -u flag can only be used with the 'build-firmware' command."
+  exit 1
+fi
 if [[ $1 == "build-firmware" ]]; then
   TARGETS=${@:2}
   if [ "$TARGETS" ]; then
