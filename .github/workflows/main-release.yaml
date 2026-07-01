@@ -222,6 +222,7 @@ jobs:
           echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
           echo "RELEASE_VERSION=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
           echo "RELEASE_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+          echo "CHANGELOG_TAG=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
 
       - name: Create and push release tag
         shell: bash
