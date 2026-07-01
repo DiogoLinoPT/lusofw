@@ -1,5 +1,11 @@
 # Changelog
 
+## [UNRELEASED]
+
+### Client
+
+- The GPS home page is now hidden from the carousel when no GPS is detected on serial at boot, instead of always appearing while `ENV_INCLUDE_GPS` is enabled.
+
 ## [v2026.7.1] - 01/07/2026
 
 Based on MeshCore v1.16.0

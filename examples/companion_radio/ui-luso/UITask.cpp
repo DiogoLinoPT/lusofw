@@ -167,6 +167,11 @@ class HomeScreen : public UIScreen {
   bool _shutdown_init;
   AdvertPath recent[UI_RECENT_LIST_SIZE];
 
+#if ENV_INCLUDE_GPS == 1
+  // Only show the GPS home page when a GPS was actually detected on serial at boot.
+  bool gpsPageVisible() const { return _sensors != NULL && _sensors->isGPSDetected(); }
+#endif
+
 
   void renderBatteryIndicator(DisplayDriver& display, uint16_t batteryMilliVolts) {
     int batteryPercentage = lipoPercentFromMilliVolts(batteryMilliVolts);
@@ -256,13 +261,22 @@ public:
 
     // curr page indicator
     int y = 14;
-    int x = display.width() / 2 - 5 * (HomePage::Count-1);
-    for (uint8_t i = 0; i < HomePage::Count; i++, x += 10) {
+#if ENV_INCLUDE_GPS == 1
+    const int hiddenPages = gpsPageVisible() ? 0 : 1;
+#else
+    const int hiddenPages = 0;
+#endif
+    int x = display.width() / 2 - 5 * (HomePage::Count - hiddenPages - 1);
+    for (uint8_t i = 0; i < HomePage::Count; i++) {
+#if ENV_INCLUDE_GPS == 1
+      if (i == HomePage::GPS && !gpsPageVisible()) continue;  // skip dot, don't advance x
+#endif
       if (i == _page) {
         display.fillRect(x-1, y-1, 3, 3);
       } else {
         display.fillRect(x, y, 1, 1);
       }
+      x += 10;
     }
 
     if (_page == HomePage::FIRST) {
@@ -470,10 +484,18 @@ public:
   bool handleInput(char c) override {
     if (c == KEY_LEFT || c == KEY_PREV) {
       _page = (_page + HomePage::Count - 1) % HomePage::Count;
+#if ENV_INCLUDE_GPS == 1
+      if (_page == HomePage::GPS && !gpsPageVisible())
+        _page = (_page + HomePage::Count - 1) % HomePage::Count;
+#endif
       return true;
     }
     if (c == KEY_NEXT || c == KEY_RIGHT) {
       _page = (_page + 1) % HomePage::Count;
+#if ENV_INCLUDE_GPS == 1
+      if (_page == HomePage::GPS && !gpsPageVisible())
+        _page = (_page + 1) % HomePage::Count;
+#endif
       if (_page == HomePage::RECENT) {
         _task->showAlert("Recent adverts", 800);
       }
@@ -497,7 +519,7 @@ public:
       return true;
     }
 #if ENV_INCLUDE_GPS == 1
-    if (c == KEY_ENTER && _page == HomePage::GPS) {
+    if (c == KEY_ENTER && _page == HomePage::GPS && gpsPageVisible()) {
       _task->toggleGPS();
       return true;
     }
