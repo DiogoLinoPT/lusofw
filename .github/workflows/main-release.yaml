@@ -219,10 +219,9 @@ jobs:
             LUSOFW_FIRMWARE_VERSION="v${LUSOFW_FIRMWARE_VERSION}"
           fi
 
-          echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
           echo "RELEASE_VERSION=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
           echo "RELEASE_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
-          echo "CHANGELOG_TAG=${LUSOFW_FIRMWARE_VERSION}" >> "$GITHUB_ENV"
 
       - name: Create and push release tag
         shell: bash
@@ -247,7 +246,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="${CHANGELOG_TAG}"
+          tag="${RELEASE_VERSION}"
 
           if [[ ! -f CHANGELOG.md ]]; then
             echo "CHANGELOG.md not found; using empty release notes." > release_body.md
