@@ -1548,21 +1548,32 @@ void MyMesh::loop() {
     updateAdvertTimer(); // schedule next local advert
   }
 #else
+  // Periodic scheduler for legacy advertisements.
+  // This runs at most once per second so we do not repeatedly evaluate timers
+  // on every loop iteration.
   if (next_advert_check && millisHasNowPassed(next_advert_check)) {
-    next_advert_check = futureMillis(1 * 1000); // check every 1 second
+    next_advert_check = futureMillis(1000);
 
+    // Flood advertisements are optional and controlled by user preferences.
     if (_prefs.flood_advert_interval > 0) {
       if (next_flood_advert == 0) {
-          updateFloodAdvertTimer();
-      } else if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
-        MESH_DEBUG_PRINTLN("%s MyMesh::loop(): Sending flood advert", getLogDateTime());
+        // If no flood advert is currently scheduled, schedule one now.
+        updateFloodAdvertTimer();
+      } else if (millisHasNowPassed(next_flood_advert)) {
+        // The scheduled time has arrived: create and send the self-advertisement.
         mesh::Packet *pkt = createSelfAdvert();
-        if (pkt) sendFlood(pkt);
+        uint32_t delay_millis = 0;
+        if (pkt) {
+          sendFloodScoped(default_scope, pkt, delay_millis, _prefs.path_hash_mode + 1);
+        }
+
+        // Clear the timer so the next scheduler pass can create a fresh one.
         next_flood_advert = 0;
+        MESH_DEBUG_PRINTLN("%s MyMesh::loop(): Sent flood advert", getLogDateTime());
       }
 
-      // checks if flood adverts are disabled, or if we already have one scheduled, before scheduling next one
-      if (next_flood_advert == 0 && _prefs.flood_advert_interval > 0) {
+      // If the timer has been consumed or was never set, arm the next advert.
+      if (next_flood_advert == 0) {
         updateFloodAdvertTimer();
       }
     }
