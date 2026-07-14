@@ -99,6 +99,11 @@ void Dispatcher::loop() {
       total_air_time += t;
       //Serial.print("  airtime="); Serial.println(t);
 
+      MESH_DEBUG_PRINTLN("%s Dispatcher::loop(): TX complete (len=%d, airtime=%ld ms)",
+                         getLogDateTime(),
+                         2 + outbound->getPathByteLen() + outbound->payload_len,
+                         t);
+
       updateTxBudget();
 
       if (t > tx_budget_ms) {
