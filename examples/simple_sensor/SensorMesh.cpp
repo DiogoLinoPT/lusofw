@@ -859,7 +859,7 @@ void SensorMesh::formatRadioStatsReply(char *reply) {
 
 void SensorMesh::formatPacketStatsReply(char *reply) {
   StatsFormatHelper::formatPacketStats(reply, radio_driver, getNumSentFlood(), getNumSentDirect(), 
-                                       getNumRecvFlood(), getNumRecvDirect(), getNumExpired());
+                                       getNumRecvFlood(), getNumRecvDirect());
 }
 
 float SensorMesh::getTelemValue(uint8_t channel, uint8_t type) {
