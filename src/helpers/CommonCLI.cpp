@@ -9,6 +9,27 @@
 #define BRIDGE_MAX_BAUD 115200
 #endif
 
+#if defined(ESP_PLATFORM)
+#include <esp_system.h>
+
+static const char* espResetReasonToText(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_UNKNOWN:   return "unknown";
+    case ESP_RST_POWERON:   return "poweron";
+    case ESP_RST_EXT:       return "ext";
+    case ESP_RST_SW:        return "sw";
+    case ESP_RST_PANIC:     return "panic";
+    case ESP_RST_INT_WDT:   return "int_wdt";
+    case ESP_RST_TASK_WDT:  return "task_wdt";
+    case ESP_RST_WDT:       return "wdt";
+    case ESP_RST_DEEPSLEEP: return "deepsleep";
+    case ESP_RST_BROWNOUT:  return "brownout";
+    case ESP_RST_SDIO:      return "sdio";
+    default:                return "other";
+  }
+}
+#endif
+
 // Believe it or not, this std C function is busted on some platforms!
 static uint32_t _atoi(const char* sp) {
   uint32_t n = 0;
@@ -945,8 +966,11 @@ void CommonCLI::handleGetCmd(uint32_t sender_timestamp, char* command, char* rep
     sprintf(reply, "> Reset: %s; Shutdown: %s",
       _board->getResetReasonString(_board->getResetReason()),
       _board->getShutdownReasonString(_board->getShutdownReason()));
+#elif defined(ESP_PLATFORM)
+    esp_reset_reason_t reason = esp_reset_reason();
+    sprintf(reply, "> %d (%s)", (int)reason, espResetReasonToText(reason));
 #else
-    strcpy(reply, "ERROR: Power management not supported");
+    strcpy(reply, "ERROR: unsupported");
 #endif
   } else if (memcmp(config, "pwrmgt.bootmv", 13) == 0) {
 #ifdef NRF52_POWER_MANAGEMENT
