@@ -44,7 +44,6 @@ struct NodePrefs { // persisted to file
   uint8_t flood_max_advert;
   uint8_t interference_threshold;
   uint8_t agc_reset_interval; // secs / 4
-  float flood_advert_base;
   // Bridge settings
   uint8_t bridge_enabled; // boolean
   uint16_t bridge_delay;  // milliseconds (default 500 ms)

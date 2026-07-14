@@ -8,7 +8,6 @@ void LusoDefaults::applyDefaults(NodePrefs& prefs) {
   prefs.advert_loc_policy = ADVERT_LOC_PREFS; // use coordinates from prefs
   prefs.airtime_factor = 1.0f;                // reverted to 50% due to internacionalization issues
   prefs.direct_tx_delay_factor = 0.3f;        // was 0.2
-  prefs.flood_advert_base = 0.308f;           // magic number
   prefs.flood_advert_interval = 23;           // defaults to 23h on lusofw, when >0 enabled our custom advert handling
   prefs.interference_threshold = 0;           // disable RSSI based listen-before-talk
   prefs.cad_enabled = 1;                      // enable hardware CAD listen-before-talk (set cad off to disable)

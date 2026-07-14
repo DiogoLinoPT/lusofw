@@ -286,12 +286,6 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     if (packet->getPathHashCount() >= _prefs.flood_max) return false;
     if (packet->getRouteType() == ROUTE_TYPE_FLOOD && packet->getPathHashCount() >= _prefs.flood_max_unscoped) return false;
     if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->getPathHashCount() >= _prefs.flood_max_advert) return false;
-
-    // Limit flood advert paket forwarding using a probabilistic reduction defined by P(h) = 0.308^(hops-1)
-    // https://github.com/meshcore-dev/MeshCore/issues/1223
-    double_t roll_dice = (double)rand() / RAND_MAX;
-    double_t forw_prob = pow(_prefs.flood_advert_base, packet->path_len - 1);
-    if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && roll_dice > forw_prob) return false;
   }
 
   // all other packets
@@ -654,7 +648,6 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   _prefs.disable_fwd = 1;
   _prefs.advert_interval = 1;        // default to 2 minutes for NEW installs
   _prefs.flood_advert_interval = 24; // 24 hours
-  _prefs.flood_advert_base = 0.308f;
   _prefs.flood_max = 64;
   _prefs.flood_max_unscoped = 64;
   _prefs.flood_max_advert = 8;

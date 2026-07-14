@@ -2,9 +2,13 @@
 
 ## [UNRELEASED]
 
-### Client
+Based on MeshCore v1.16.0
+main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
-- The GPS home page is now hidden from the carousel when no GPS is detected on serial at boot, instead of always appearing while `ENV_INCLUDE_GPS` is enabled.
+### Correções
+
+- REPETIDOR: Corrigido envio de anúncios por inundação (flood adverts): agora respeita o `default_scope` e o modo de hash de caminho (`path_hash_mode` nas preferências).
+- CLIENTE: A página inicial do GPS agora fica oculta no carrossel quando nenhum GPS é detectado na porta série no arranque, em vez de aparecer sempre quando `ENV_INCLUDE_GPS` está ativado.
 
 ## [v2026.7.1] - 01/07/2026
 

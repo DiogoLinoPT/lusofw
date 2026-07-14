@@ -463,77 +463,7 @@ bool MyMesh::allowPacketForward(const mesh::Packet *packet) {
     }
   }
 
-#if 0
-#ifdef DISABLE_LEGACY_ADVERT 
-#define ADVERTS_ALLOWED_START 0  // hours >=
-#define ADVERTS_ALLOWED_END   23 // hours <=
-
-  // Limit flood advert paket forwarding using a probabilistic reduction defined by P(h) = 0.308^(hops-1)
-  // https://github.com/meshcore-dev/MeshCore/issues/1223
-  if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->isRouteFlood()) {
-
-    uint32_t now = getRTCClock()->getCurrentTime();
-    DateTime dt = DateTime(now);
-    uint8_t current_hour = dt.hour();
-
-    if (current_hour >= ADVERTS_ALLOWED_START && current_hour <= ADVERTS_ALLOWED_END) {
-      MESH_DEBUG_PRINTLN("Flood advert: within allowed advert window, allowing forward");
-      return true; // Always adverts through during allowed hours
-    }
-
-    // Advert payload structure: [pub_key(32)][timestamp(4)][signature(64)][app_data...]
-    const int app_data_offset = PUB_KEY_SIZE + 4 + SIGNATURE_SIZE; // 32 + 4 + 64 = 100
-
-    // Extract the advert type from app_data (the lower 4 bits of the first byte).
-    uint8_t adv_type = (packet->payload_len > app_data_offset) ? (packet->payload[app_data_offset] & 0x0F) : 0xFF;
-
-    // Reject adverts from repeaters whose pub_key starts with 0x01 (mobile node).
-    if (packet->payload_len > 0 && adv_type == ADV_TYPE_REPEATER && packet->payload[0] == 0x01) {
-      MESH_DEBUG_PRINTLN("Flood advert rejected: pub_key starts with 0x01 for repeater");
-      return false;
-    }
-
-    if (packet->payload_len > app_data_offset && adv_type != ADV_TYPE_NONE && adv_type != ADV_TYPE_CHAT) {
-      // Use local validated value to avoid modifying preferences in packet-forwarding logic
-      float base_value = _prefs.flood_advert_base;
-      if (base_value <= 0.0f || base_value > 1.0f) {
-        MESH_DEBUG_PRINTLN("WARNING: Invalid flood_advert_base=%.3f, using default 0.308",
-                           base_value);
-        base_value = 0.308f;
-      }
-
-      if (packet->path_len == 0) {
-        MESH_DEBUG_PRINTLN("Flood advert: path_len=0, allowing forward");
-        return true; // Always allow zero-hop adverts through
-      }
-
-      double_t roll_dice = (double)rand() / RAND_MAX;
-      double_t forw_prob = pow(base_value, packet->path_len - 1);
-      MESH_DEBUG_PRINTLN("Flood advert filter: path_len=%d, roll=%.3f, prob=%.3f, base=%.3f",
-                         packet->path_len, roll_dice, forw_prob, base_value);
-
-      if (roll_dice > forw_prob) {
-        MESH_DEBUG_PRINTLN("Flood advert REJECTED by probabilistic filter");
-        return false;
-      } else {
-        MESH_DEBUG_PRINTLN("Flood advert ACCEPTED for forwarding");
-      }
-
-    }
-#ifdef MESH_DEBUG
-    else if (packet->payload_len > app_data_offset) {
-      MESH_DEBUG_PRINTLN("Flood advert filter SKIPPED: type=%d", adv_type);
-    } else {
-      MESH_DEBUG_PRINTLN("Flood advert filter SKIPPED: payload_len=%d too short (need >%d)",
-                         packet->payload_len, app_data_offset);
-    }
-#endif
-  }
-#endif
-#endif
-
-  // FIXME: Temporary patch to reject flood adverts from repeaters whose pub_key starts with 0x01 (mobile node).
-  // Remove this block when probabilistic flood advert filtering is enabled again.
+  // Reject flood adverts from repeaters whose pub_key starts with 0x01 (mobile node).
   if (packet->getPayloadType() == PAYLOAD_TYPE_ADVERT && packet->isRouteFlood()) {
     // Advert payload structure: [pub_key(32)][timestamp(4)][signature(64)][app_data...]
     const int app_data_offset = PUB_KEY_SIZE + 4 + SIGNATURE_SIZE; // 32 + 4 + 64 = 100
@@ -1035,7 +965,6 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   last_millis = 0;
   uptime_millis = 0;
   
-  adverts_sent = 0;
   last_network_sync_time = 0;  // no network time sync accepted yet this boot
   next_advert_check = futureMillis(30000);
   next_local_advert = next_flood_advert = 0;

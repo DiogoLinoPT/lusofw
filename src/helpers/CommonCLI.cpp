@@ -82,7 +82,7 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read((uint8_t *)&_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));  // 84
     file.read((uint8_t *)&_prefs->guest_password[0], sizeof(_prefs->guest_password)); // 88
     file.read((uint8_t *)&_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor)); // 104
-    file.read((uint8_t *)&_prefs->flood_advert_base, sizeof(_prefs->flood_advert_base));           // 108
+    file.read(pad, 4);                                                                             // 108
     file.read((uint8_t *)&_prefs->sf, sizeof(_prefs->sf));                                         // 112
     file.read((uint8_t *)&_prefs->cr, sizeof(_prefs->cr));                                         // 113
     file.read((uint8_t *)&_prefs->allow_read_only, sizeof(_prefs->allow_read_only));               // 114
@@ -178,7 +178,7 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write((uint8_t *)&_prefs->tx_delay_factor, sizeof(_prefs->tx_delay_factor));  // 84
     file.write((uint8_t *)&_prefs->guest_password[0], sizeof(_prefs->guest_password)); // 88
     file.write((uint8_t *)&_prefs->direct_tx_delay_factor, sizeof(_prefs->direct_tx_delay_factor)); // 104
-    file.write((uint8_t *)&_prefs->flood_advert_base, sizeof(_prefs->flood_advert_base));           // 108
+    file.write(pad, 4);                                                                             // 108 : reserved (was flood_advert_base)
     file.write((uint8_t *)&_prefs->sf, sizeof(_prefs->sf));                                         // 112
     file.write((uint8_t *)&_prefs->cr, sizeof(_prefs->cr));                                         // 113
     file.write((uint8_t *)&_prefs->allow_read_only, sizeof(_prefs->allow_read_only));               // 114
@@ -795,15 +795,6 @@ void CommonCLI::handleSetCmd(uint32_t sender_timestamp, char* command, char* rep
       _prefs->adc_multiplier = 0.0f;
       strcpy(reply, "Error: unsupported by this board");
     };
-  } else if (memcmp(config, "flood.advert.base ", 18) == 0) {
-    float f = atof(&config[18]);
-    if ((f > 0) || (f < 1)) {
-      _prefs->flood_advert_base = f;
-      savePrefs();
-      strcpy(reply, "OK");
-    } else {
-      strcpy(reply, "Error: base must be between 0 and 1");
-    }
   } else {
     strcpy(reply, "unknown config: ");
     StrHelper::strncpy(&reply[16], config, 160-17);
@@ -946,8 +937,6 @@ void CommonCLI::handleGetCmd(uint32_t sender_timestamp, char* command, char* rep
     } else {
       sprintf(reply, "> %.3f", adc_mult);
     }
-  } else if (memcmp(config, "flood.advert.base", 17) == 0) {
-    sprintf(reply, "> %s", StrHelper::ftoa(_prefs->flood_advert_base));
   // Power management commands
   } else if (memcmp(config, "pwrmgt.support", 14) == 0) {
 #ifdef NRF52_POWER_MANAGEMENT

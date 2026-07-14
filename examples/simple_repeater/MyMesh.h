@@ -125,7 +125,6 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
 #endif
   // new advert system variables
   unsigned long next_advert_check, next_flood_advert_offset;
-  uint8_t adverts_sent;
   // Highest network time timestamp ACCEPTED this boot (RAM-only anti-replay
   // high-water mark). Reset to 0 on every reboot. See ENABLE_NETWORK_TIME.
   uint32_t last_network_sync_time = 0;
