@@ -124,9 +124,9 @@ for section, options in data:
 
 # disable all debug logging flags if DISABLE_DEBUG=1 is set
 disable_debug_flags() {
-  # if [ "$DISABLE_DEBUG" == "1" ]; then
+  if [ "$DISABLE_DEBUG" == "1" ]; then
     export PLATFORMIO_BUILD_FLAGS="${PLATFORMIO_BUILD_FLAGS} -UMESH_DEBUG -UBLE_DEBUG_LOGGING -UWIFI_DEBUG_LOGGING -UBRIDGE_DEBUG -UGPS_NMEA_DEBUG -UCORE_DEBUG_LEVEL -UESPNOW_DEBUG_LOGGING -UDEBUG_RP2040_WIRE -UDEBUG_RP2040_SPI -UDEBUG_RP2040_CORE -UDEBUG_RP2040_PORT -URADIOLIB_DEBUG_SPI -URADIOLIB_DEBUG_BASIC -URADIOLIB_DEBUG_PROTOCOL"
-  # fi
+  fi
 }
 
 # build firmware for the provided pio env in $1
