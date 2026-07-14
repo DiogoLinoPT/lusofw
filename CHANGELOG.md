@@ -7,8 +7,26 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 ### Correções
 
-- REPETIDOR: Corrigido envio de anúncios por inundação (flood adverts): agora respeita o `default_scope` e o modo de hash de caminho (`path_hash_mode` nas preferências).
 - CLIENTE: A página inicial do GPS agora fica oculta no carrossel quando nenhum GPS é detectado na porta série no arranque, em vez de aparecer sempre quando `ENV_INCLUDE_GPS` está ativado.
+- REPETIDOR: Corrigido envio de anúncios por inundação (flood adverts): agora respeita o `default_scope` e o modo de hash de caminho (`path_hash_mode` nas preferências).
+- REPETIDOR: Melhorada a rotina de sleep com rearmar de wake sources. (upstream v1.16.0 bug)
+- REPETIDOR: Removida a redução probabilística de flood adverts.
+
+#### Melhorias
+
+- CLI: Adicionada a leitura do motivo de arranque do ESP32 (`get pwrmgt.bootreason`).
+- CLI: Reforçada a cópia segura de strings no tratamento de comandos.
+- RÁDIO: Ajustado o atraso de retentativa CAD para intervalo entre 120 a 360 ms.
+
+#### Observabilidade                                                                                                                                                                                                                                                                                                                                                                    
+
+- DISPATCHER: Adicionados logs de debug para conclusão de TX.
+- ESTATÍSTICAS: Removidos parâmetros não usados na formatação de respostas.
+
+#### Build e Configuração
+
+- BUILD: Adicionada a variável `DISABLE_DEBUG` ao processo de build.
+- BUILD: Reorganizadas as build flags no platformio.ini.
 
 ## [v2026.7.1] - 01/07/2026
 
