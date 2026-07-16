@@ -76,18 +76,19 @@ public:
     // Set GPIO wakeup
     gpio_num_t wakeupPin = (gpio_num_t)getIRQGpio();    
 
-    // If IRQ is already high, a packet is in-flight. Do not enter sleep.
-    if (gpio_get_level(wakeupPin) == HIGH) {
-      delay(1);
-      return;
-    }
-
-    // Re-arm wake sources each cycle so stale state does not accumulate.
-    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-
     // Configure timer wakeup
     if (secs > 0) {
       esp_sleep_enable_timer_wakeup(secs * 1000000ULL); // Wake up periodically to do scheduled jobs
+    }
+
+    // Disable CPU interrupt servicing
+    portENTER_CRITICAL(&sleepMux);
+
+    // Skip sleep if there is a LoRa packet
+    if (gpio_get_level(wakeupPin) == HIGH) {
+      portEXIT_CRITICAL(&sleepMux);
+      delay(1);
+      return;
     }
 
     // Configure GPIO wakeup
@@ -100,6 +101,9 @@ public:
     // Avoid ISR flood during wakeup due to HIGH LEVEL interrupt
     gpio_wakeup_disable(wakeupPin);
     gpio_set_intr_type(wakeupPin, GPIO_INTR_POSEDGE);
+
+    // Enable CPU interrupt servicing
+    portEXIT_CRITICAL(&sleepMux);
   }
 
   uint8_t getStartupReason() const override { return startup_reason; }
