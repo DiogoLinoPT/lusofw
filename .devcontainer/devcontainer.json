@@ -19,7 +19,7 @@
 	"mounts": [
 	],
 	"postCreateCommand": {
-		"platformio": "pipx install platformio",
+		"platformio": "pipx install platformio esptool",
 		"opencode": "curl -fsSL https://opencode.ai/install | bash"
 	},
 	"updateContentCommand": {
