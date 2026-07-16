@@ -9,8 +9,8 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 - CLIENTE: A página inicial do GPS agora fica oculta no carrossel quando nenhum GPS é detectado na porta série no arranque, em vez de aparecer sempre quando `ENV_INCLUDE_GPS` está ativado.
 - REPETIDOR: Corrigido envio de anúncios por inundação (flood adverts): agora respeita o `default_scope` e o modo de hash de caminho (`path_hash_mode` nas preferências).
-- REPETIDOR: Melhorada a rotina de sleep com rearmar de wake sources. (upstream v1.16.0 bug)
 - REPETIDOR: Removida a redução probabilística de flood adverts.
+- REPETIDOR: Corrigido um *buffer overflow* no acumulador de comandos série.
 
 #### Melhorias
 
