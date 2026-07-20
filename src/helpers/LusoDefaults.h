@@ -5,14 +5,14 @@
 // Applies and tracks lusofw-specific NodePrefs defaults.
 //
 // On every firmware version change (including the very first boot),
-// reset() overwrites the lusofw-managed preference fields, then the
+// applyDefaults() overwrites the lusofw-managed preference fields, then the
 // caller persists them and stamps the new version. User-defined values
 // for these fields are intentionally reset on version change.
 class LusoDefaults {
  public:
-  // Resets all lusofw-managed NodePrefs fields to their factory defaults.
-  // Overwrites any user-defined values, so only call on firmware version change.
-  static void applyDefaults(NodePrefs& prefs);
+  // Applies baseline defaults, then any version-specific overrides for the
+  // given firmware version string (e.g. "2026.7.2-rc2").
+  static void applyDefaults(NodePrefs& prefs, const char* version);
 
   // Reads the previously-recorded firmware version string from the filesystem.
   // Empty string if none recorded yet (first boot).
@@ -20,4 +20,11 @@ class LusoDefaults {
 
   // Records the given firmware version string to the filesystem.
   static void writeVersion(FILESYSTEM* fs, const char* version);
+
+ private:
+  // Returns true if `version` is strictly less than `threshold`.
+  // Accepts "0.0.7", "2025.3.4", optional leading 'v'/'V', and ignores
+  // pre-release suffixes after the 3rd numeric component. Empty/null
+  // version is treated as oldest.
+  static bool versionLessThan(const char* version, const char* threshold);
 };

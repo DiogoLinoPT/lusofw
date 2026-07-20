@@ -3,10 +3,10 @@
 #include <MeshCore.h>
 #include <string.h>
 
-void LusoDefaults::applyDefaults(NodePrefs& prefs) {
+void LusoDefaults::applyDefaults(NodePrefs &prefs, const char *version) {
+  // Always apply the version-independent baseline first.
   prefs.advert_interval = 0;                  // direct adverts are legacy
   prefs.advert_loc_policy = ADVERT_LOC_PREFS; // use coordinates from prefs
-  prefs.airtime_factor = 1.0f;                // reverted to 50% due to internacionalization issues
   prefs.direct_tx_delay_factor = 0.3f;        // was 0.2
   prefs.flood_advert_interval = 23;           // defaults to 23h on lusofw, when >0 enabled our custom advert handling
   prefs.interference_threshold = 0;           // disable RSSI based listen-before-talk
@@ -16,16 +16,16 @@ void LusoDefaults::applyDefaults(NodePrefs& prefs) {
   prefs.rx_delay_base = 0.0f;                 // turn off by default, was 10.0;
   prefs.tx_delay_factor = 0.5f;               // was 0.25f
 
+  // Then layer any version-specific overrides.
+  if (versionLessThan(version, "2026.7.2")) {
+    prefs.airtime_factor = 1.0f; // reverted to 50% due to internacionalization issues
 #if defined(USE_SX1262) || defined(USE_SX1268)
-#ifdef SX126X_RX_BOOSTED_GAIN
-      prefs.rx_boosted_gain = SX126X_RX_BOOSTED_GAIN;
-#else
-      prefs.rx_boosted_gain = 1; // enabled by default;
+    prefs.rx_boosted_gain = 1; // config struct changes made this be disabled on edge cases
 #endif
-#endif
+  }
 }
 
-void LusoDefaults::readVersion(FILESYSTEM* fs, char* buf, size_t bufLen) {
+void LusoDefaults::readVersion(FILESYSTEM *fs, char *buf, size_t bufLen) {
   if (!buf || bufLen == 0) {
     return;
   }
@@ -58,7 +58,7 @@ void LusoDefaults::readVersion(FILESYSTEM* fs, char* buf, size_t bufLen) {
   MESH_DEBUG_PRINTLN("LusoDefaults: read stored version '%s'", buf);
 }
 
-void LusoDefaults::writeVersion(FILESYSTEM* fs, const char* version) {
+void LusoDefaults::writeVersion(FILESYSTEM *fs, const char *version) {
   if (!fs || !version) {
     return;
   }
@@ -77,4 +77,36 @@ void LusoDefaults::writeVersion(FILESYSTEM* fs, const char* version) {
     f.close();
     MESH_DEBUG_PRINTLN("LusoDefaults: wrote version '%s'", version);
   }
+}
+
+bool LusoDefaults::versionLessThan(const char *version, const char *threshold) {
+  if (!version || !*version) {
+    return true;
+  }
+  if (version[0] == 'v' || version[0] == 'V') {
+    version++;
+  }
+
+  for (int i = 0; i < 3; i++) {
+    int v = 0;
+    while (*version >= '0' && *version <= '9') {
+      v = v * 10 + (*version - '0');
+      version++;
+    }
+    int t = 0;
+    while (*threshold >= '0' && *threshold <= '9') {
+      t = t * 10 + (*threshold - '0');
+      threshold++;
+    }
+    if (v != t) {
+      return v < t;
+    }
+    if (*version == '.') {
+      version++;
+    }
+    if (*threshold == '.') {
+      threshold++;
+    }
+  }
+  return false; // equal
 }
