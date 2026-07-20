@@ -1041,8 +1041,9 @@ void MyMesh::begin(FILESYSTEM *fs) {
   LusoDefaults::readVersion(_fs, oldVersion, sizeof(oldVersion));
   if (strcmp(oldVersion, LUSOFW_FIRMWARE_VERSION) != 0) {
     LusoDefaults::applyDefaults(_prefs, oldVersion);
-    LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
     _cli.savePrefs(_fs);
+    LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
+    
     delay(1000);
     board.reboot();  // doesn't return
   }
