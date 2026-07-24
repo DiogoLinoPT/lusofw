@@ -395,6 +395,12 @@ void UITask::shutdown(bool restart){
     _board->reboot();
   } else {
     radio_driver.powerOff();
+#if ENV_INCLUDE_GPS == 1
+    // power down GPS before SYSTEMOFF; some boards' powerOff() only pulls EN low
+    if (_sensors) {
+      _sensors->setSettingValue("gps", "0");
+    }
+#endif
     _board->powerOff();
   }
 }

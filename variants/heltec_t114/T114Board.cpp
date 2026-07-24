@@ -16,6 +16,8 @@ void T114Board::initiateShutdown(uint8_t reason) {
 #if ENV_INCLUDE_GPS == 1
   pinMode(GPS_EN, OUTPUT);
   digitalWrite(GPS_EN, LOW);
+  pinMode(GPS_RESET, OUTPUT);
+  digitalWrite(GPS_RESET, LOW);   // shared w/ PIN_3V3_EN (pin 38): assert reset + drop GPS rail
 #endif
   digitalWrite(SX126X_POWER_EN, LOW);
 
