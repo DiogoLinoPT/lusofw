@@ -1,35 +1,36 @@
 {
-	"name": "MeshCore",
+	"name": "MeshCore | Luso Firmware",
 	"image": "mcr.microsoft.com/devcontainers/python:3-bookworm",
 	"features": {
 		"ghcr.io/devcontainers/features/node:2.1.0": {},
 		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
-			"packages": [ "sudo", "ripgrep" ]
+			"packages": [
+				"sudo",
+				"ripgrep"
+			]
 		}
 	},
 	"runArgs": [
 		"--privileged",
 		"--network=host",
 		"--device=/dev/bus/usb",
-		// arch linux tty* is owned by uucp (986)
 		"--group-add=986",
-		// debian tty* is owned by dialout (20)
-		"--group-add=20"
+		"--group-add=20",
+		"--env-file",
+		"${localWorkspaceFolder}/.env.dev"
 	],
-	"mounts": [
-	],
-	"postCreateCommand": {
+	"mounts": [],
+	"onCreateCommand": {
+		"claude": "bash -c 'cd .devcontainer && bash claude.sh'",
 		"platformio": "pipx install platformio esptool",
-		"opencode": "curl -fsSL https://opencode.ai/install | bash"
-	},
-	"updateContentCommand": {
-		"gsd": "npx --yes @opengsd/gsd-core@latest --opencode --global"
+		"timezone": "sudo ln -snf /usr/share/zoneinfo/Europe/Lisbon /etc/localtime && echo 'Europe/Lisbon' | sudo tee /etc/timezone",
 	},
 	"customizations": {
 		"vscode": {
 			"settings": {
-				"platformio-ide.disablePIOHomeStartup": true,
 				"editor.formatOnSave": false,
+				"platformio-ide.disablePIOHomeStartup": true,
+				"remote.autoForwardPorts": false,
 				"workbench.colorCustomizations": {
 					"titleBar.activeBackground": "#0d1a2b",
 					"titleBar.activeForeground": "#ffffff",
