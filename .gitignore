@@ -1,16 +1,16 @@
 !.env.local.example
-.DS_Store
 .env*
-.vscode/*
 
 .cache
 .ccls
 .direnv
-.direnv/
 .DS_Store
 .idea
 .pio
-.venv/
+.tmp
+.venv
+.vscode/*
+
 cmake-*
 compile_commands.json
 out/

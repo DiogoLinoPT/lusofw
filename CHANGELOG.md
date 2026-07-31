@@ -27,6 +27,7 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 
 - BUILD: Adicionada a variável `DISABLE_DEBUG` ao processo de build.
 - BUILD: Reorganizadas as build flags no platformio.ini.
+- BUILD: Adicionado o ambiente de build da ponte RS232 (`heltec_v4_repeater_bridge_rs232`) para o Heltec v4.
 
 ## [v2026.7.1] - 01/07/2026
 
