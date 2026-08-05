@@ -3,6 +3,17 @@
 #include <MeshCore.h>
 #include <string.h>
 
+/*
+ *                        _
+ *   _ __ ___ _ __  _ __ (_) ___
+ *  | '__/ _ | '_ \| '_ \| |/ _ \  DUAL ACTION
+ *  | | |  __| | | | | | | |  __/  MINT FLAVOUR
+ *  |_|  \___|_| |_|_| |_|_|\___|  24 comprimidos para mastigar
+ * 
+ *  Neutralizam de forma rápida e duradoura o excesso de ácido no estômago.
+ *
+ */
+
 void LusoDefaults::applyDefaults(NodePrefs &prefs, const char *version) {
   // Always apply the version-independent baseline first.
   prefs.advert_interval = 0;                  // direct adverts are legacy
@@ -18,7 +29,9 @@ void LusoDefaults::applyDefaults(NodePrefs &prefs, const char *version) {
 
   // Then layer any version-specific overrides.
   if (versionLessThan(version, "2026.7.2")) {
-    prefs.airtime_factor = 1.0f; // reverted to 50% due to internacionalization issues
+    prefs.airtime_factor = 1.0f; // normalize 2026.7.2 to 50%
+                                 // future versions will not change it again
+                                 // https://meshcore.pt/en/docs/comunicado-lusofw for more info
 #if defined(USE_SX1262) || defined(USE_SX1268)
     prefs.rx_boosted_gain = 1; // config struct changes made this be disabled on edge cases
 #endif
