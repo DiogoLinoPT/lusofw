@@ -28,8 +28,8 @@ void LusoDefaults::applyDefaults(NodePrefs &prefs, const char *version) {
   prefs.tx_delay_factor = 0.5f;               // was 0.25f
 
   // Then layer any version-specific overrides.
-  if (versionLessThan(version, "2026.7.2")) {
-    prefs.airtime_factor = 1.0f; // normalize 2026.7.2 to 50%
+  if (versionLessThan(version, "2026.7.1")) {
+    prefs.airtime_factor = 1.0f; // normalize 2026.7.1 to 50%
                                  // future versions will not change it again
                                  // https://meshcore.pt/en/docs/comunicado-lusofw for more info
 #if defined(USE_SX1262) || defined(USE_SX1268)
