@@ -11,6 +11,7 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 - REPETIDOR: Corrigido envio de anúncios por inundação (flood adverts): agora respeita o `default_scope` e o modo de hash de caminho (`path_hash_mode` nas preferências).
 - REPETIDOR: Removida a redução probabilística de flood adverts.
 - REPETIDOR: Corrigido um *buffer overflow* no acumulador de comandos série.
+- NRF52: Limpo o registo de retenção GPREGRET (0) no arranque e antes do SYSTEMOFF, evitando que um valor mágico de DFU residual faça o dispositivo arrancar no modo bootloader.
 
 #### Melhorias
 
