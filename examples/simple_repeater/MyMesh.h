@@ -5,6 +5,17 @@
 #include <RTClib.h>
 #include <target.h>
 
+struct GeoPoint {
+    float lat;
+    float lon;
+};
+
+struct RegionPolygon {
+    const char* name;
+    const GeoPoint* points;
+    int num_points;
+};
+
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
   #include <InternalFileSystem.h>
 #elif defined(RP2040_PLATFORM)
@@ -86,6 +97,7 @@ struct NeighbourInfo {
 #define PACKET_LOG_FILE  "/packet_log"
 
 class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
+  friend class AutoRegions;
   FILESYSTEM* _fs;
   uint32_t last_millis;
   uint64_t uptime_millis;
@@ -136,6 +148,7 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
   uint8_t handleAnonClockReq(const mesh::Identity& sender, uint32_t sender_timestamp, const uint8_t* data);
   int handleRequest(ClientInfo* sender, uint32_t sender_timestamp, uint8_t* payload, size_t payload_len);
   mesh::Packet* createSelfAdvert();
+  void checkRegionAutoAssign();
 
   File openAppend(const char* fname);
   bool isLooped(const mesh::Packet* packet, const uint8_t max_counters[]);

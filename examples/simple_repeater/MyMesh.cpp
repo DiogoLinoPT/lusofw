@@ -1,5 +1,7 @@
 #include "MyMesh.h"
+#include "AutoRegions.h"
 #include <algorithm>
+
 
 /* ------------------------------ Config -------------------------------- */
 
@@ -1031,6 +1033,17 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   memset(default_scope.key, 0, sizeof(default_scope.key));
 }
 
+// -------------------------------------------------------------
+  // NEW ROUTINE: AUTO-ASSIGN REGIONS AND SUPER-REGION
+// -------------------------------------------------------------
+void MyMesh::checkRegionAutoAssign() {
+    static uint32_t last_check = 0;
+    if (millis() - last_check < 5000 && last_check != 0) return;
+    last_check = millis();
+    if (last_check == 0) last_check = 1; // Prevent re-triggering if millis() is exactly 0
+    AutoRegions::checkRegionAutoAssign(this);
+}
+
 void MyMesh::begin(FILESYSTEM *fs) {
   mesh::Mesh::begin();
   _fs = fs;
@@ -1041,9 +1054,8 @@ void MyMesh::begin(FILESYSTEM *fs) {
   LusoDefaults::readVersion(_fs, oldVersion, sizeof(oldVersion));
   if (strcmp(oldVersion, LUSOFW_FIRMWARE_VERSION) != 0) {
     LusoDefaults::applyDefaults(_prefs, oldVersion);
-    _cli.savePrefs(_fs);
     LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
-    
+    _cli.savePrefs(_fs);
     delay(1000);
     board.reboot();  // doesn't return
   }
@@ -1072,16 +1084,8 @@ void MyMesh::begin(FILESYSTEM *fs) {
     }
   }
 
-  // Ensure default region exists and allow flood
-  auto region = region_map.findByName("#portugal");
-
-  if (!region) {
-    region = region_map.putRegion("#portugal", region_map.getWildcard().id);
-  }
-  
-  if (region) {
-    region->flags &= ~REGION_DENY_FLOOD; // Always clear the deny flood flag to allow flooding
-  }
+  // Evaluate and assign initial geographical regions based on GPS coordinates
+  checkRegionAutoAssign();
 
 #if defined(WITH_BRIDGE)
   if (_prefs.bridge_enabled) {
@@ -1460,6 +1464,8 @@ void MyMesh::loop() {
 #ifdef WITH_BRIDGE
   bridge.loop();
 #endif
+
+  checkRegionAutoAssign();
 
   mesh::Mesh::loop();
 
