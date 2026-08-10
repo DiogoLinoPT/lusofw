@@ -2,8 +2,15 @@
 
 ## [UNRELEASED]
 
+Based on MeshCore v1.17.0
+main@727fc0512ce08bfd7b499e46daa7fca6eeec730d
+
 Based on MeshCore v1.16.0
 main@e8d3c53ba1ea863937081cd0caad759b832f3028
+
+### Funcionalidades
+
+- REPETIDOR: Atribuição automática de regiões geográficas a partir da localização do nó (coordenadas das preferências ou GPS).
 
 ### Correções
 
@@ -19,7 +26,7 @@ main@e8d3c53ba1ea863937081cd0caad759b832f3028
 - CLI: Reforçada a cópia segura de strings no tratamento de comandos.
 - RÁDIO: Ajustado o atraso de retentativa CAD para intervalo entre 120 a 360 ms.
 
-#### Observabilidade                                                                                                                                                                                                                                                                                                                                                                    
+#### Observabilidade
 
 - DISPATCHER: Adicionados logs de debug para conclusão de TX.
 - ESTATÍSTICAS: Removidos parâmetros não usados na formatação de respostas.

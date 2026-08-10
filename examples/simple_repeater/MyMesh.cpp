@@ -1,7 +1,8 @@
 #include "MyMesh.h"
-#include "AutoRegions.h"
+#if defined(ENABLE_AUTO_REGIONS)
+#include "lusofw/AutoRegions.h"
+#endif
 #include <algorithm>
-
 
 /* ------------------------------ Config -------------------------------- */
 
@@ -1028,17 +1029,6 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   memset(default_scope.key, 0, sizeof(default_scope.key));
 }
 
-// -------------------------------------------------------------
-  // NEW ROUTINE: AUTO-ASSIGN REGIONS AND SUPER-REGION
-// -------------------------------------------------------------
-void MyMesh::checkRegionAutoAssign() {
-    static uint32_t last_check = 0;
-    if (millis() - last_check < 5000 && last_check != 0) return;
-    last_check = millis();
-    if (last_check == 0) last_check = 1; // Prevent re-triggering if millis() is exactly 0
-    AutoRegions::checkRegionAutoAssign(this);
-}
-
 void MyMesh::begin(FILESYSTEM *fs) {
   mesh::Mesh::begin();
   _fs = fs;
@@ -1049,15 +1039,15 @@ void MyMesh::begin(FILESYSTEM *fs) {
   LusoDefaults::readVersion(_fs, oldVersion, sizeof(oldVersion));
   if (strcmp(oldVersion, LUSOFW_FIRMWARE_VERSION) != 0) {
     LusoDefaults::applyDefaults(_prefs, oldVersion);
-    LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
     _cli.savePrefs(_fs);
+    LusoDefaults::writeVersion(_fs, LUSOFW_FIRMWARE_VERSION);
     delay(1000);
     board.reboot();  // doesn't return
   }
 
   acl.load(_fs, self_id);
   // TODO: key_store.begin();
-  region_map.load(_fs);
+  region_map.load(_fs);                                                                                                              
 
   // establish default-scope
   {
@@ -1079,8 +1069,10 @@ void MyMesh::begin(FILESYSTEM *fs) {
     }
   }
 
+#if defined(ENABLE_AUTO_REGIONS)
   // Evaluate and assign initial geographical regions based on GPS coordinates
-  checkRegionAutoAssign();
+  AutoRegions::checkRegionAutoAssign(region_map, _prefs, sensors, _fs);
+#endif
 
 #if defined(WITH_BRIDGE)
   if (_prefs.bridge_enabled) {
@@ -1096,7 +1088,7 @@ void MyMesh::begin(FILESYSTEM *fs) {
                      radio_driver.getRxBoostedGainMode() ? "Enabled" : "Disabled");
   board.setLoRaFemLnaEnabled(_prefs.radio_fem_rxgain);
 
-#ifndef DISABLE_LEGACY_ADVERT
+#ifndef ENABLE_SMART_ADVERTS
   updateAdvertTimer();
   updateFloodAdvertTimer();
 #endif
@@ -1156,7 +1148,7 @@ void MyMesh::sendSelfAdvertisement(int delay_millis, bool flood) {
 }
 
 void MyMesh::updateAdvertTimer() {
-#ifndef DISABLE_LEGACY_ADVERT
+#ifndef ENABLE_SMART_ADVERTS
   if (_prefs.advert_interval > 0) { // schedule local advert timer
     next_local_advert = futureMillis(((uint32_t)_prefs.advert_interval) * 2 * 60 * 1000);
   } else {
@@ -1164,18 +1156,18 @@ void MyMesh::updateAdvertTimer() {
   }
 #else
   next_local_advert = 0; // stop the timer
-  MESH_DEBUG_PRINTLN("Local advert timer disabled (DISABLE_LEGACY_ADVERT mode)");
+  MESH_DEBUG_PRINTLN("Local advert timer disabled (ENABLE_SMART_ADVERTS mode)");
 #endif
 }
 
 void MyMesh::updateFloodAdvertTimer() {
-#ifndef DISABLE_LEGACY_ADVERT
+#ifndef ENABLE_SMART_ADVERTS
   if (_prefs.flood_advert_interval > 0) { // schedule flood advert timer
     next_flood_advert = futureMillis((uint32_t)(_prefs.flood_advert_interval) * 60 * 60 * 1000);
   } else {
     next_flood_advert = 0; // stop the timer
   }
-#else
+#else  // ENABLE_SMART_ADVERTS
   const uint32_t WINDOW_SIZE_SECONDS = 23 * 3600; // 23 hours (Rolling Window)
   const int32_t JITTER_MAX_SECONDS = 3; // 3 seconds Jitter to prevent advert collisions
 
@@ -1337,6 +1329,13 @@ void MyMesh::onDefaultRegionChanged(const RegionEntry* r) {
   }
 }
 
+void MyMesh::onNodeConfigChanged() {
+#if defined(ENABLE_AUTO_REGIONS)
+  // Re-evaluate and reassign geographical regions based on the new name/coordinates
+  AutoRegions::checkRegionAutoAssign(region_map, _prefs, sensors, _fs);
+#endif
+}
+
 void MyMesh::formatStatsReply(char *reply) {
   StatsFormatHelper::formatCoreStats(reply, board, *_ms, _err_flags, _mgr);
 }
@@ -1465,11 +1464,9 @@ void MyMesh::loop() {
   bridge.loop();
 #endif
 
-  checkRegionAutoAssign();
-
   mesh::Mesh::loop();
 
-#ifndef DISABLE_LEGACY_ADVERT
+#ifndef ENABLE_SMART_ADVERTS
   if (next_flood_advert && millisHasNowPassed(next_flood_advert)) {
     mesh::Packet *pkt = createSelfAdvert();
     uint32_t delay_millis = 0;
@@ -1483,7 +1480,7 @@ void MyMesh::loop() {
 
     updateAdvertTimer(); // schedule next local advert
   }
-#else
+#else  // ENABLE_SMART_ADVERTS
   // Periodic scheduler for legacy advertisements.
   // This runs at most once per second so we do not repeatedly evaluate timers
   // on every loop iteration.

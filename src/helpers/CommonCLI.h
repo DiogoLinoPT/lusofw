@@ -228,6 +228,14 @@ public:
     // no op by default
   }
 
+  // Fired after a CLI command changes node attributes consumed by
+  // location/region derivation — "set name", "set lat", "set lon" and
+  // "gps setloc" — so the app can react (e.g. re-evaluate automatic
+  // region assignment).
+  virtual void onNodeConfigChanged() {
+    // no op by default
+  }
+
   virtual void setBridgeState(bool enable) {
     // no op by default
   };

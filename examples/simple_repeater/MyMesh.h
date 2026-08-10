@@ -5,17 +5,6 @@
 #include <RTClib.h>
 #include <target.h>
 
-struct GeoPoint {
-    float lat;
-    float lon;
-};
-
-struct RegionPolygon {
-    const char* name;
-    const GeoPoint* points;
-    int num_points;
-};
-
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
   #include <InternalFileSystem.h>
 #elif defined(RP2040_PLATFORM)
@@ -44,8 +33,8 @@ struct RegionPolygon {
 #include <helpers/StaticPoolPacketManager.h>
 #include <helpers/StatsFormatHelper.h>
 #include <helpers/TxtDataHelpers.h>
-#include <helpers/LusoDefaults.h>
 #include <helpers/RegionMap.h>
+#include <lusofw/Defaults.h>
 #include "RateLimiter.h"
 
 #ifdef WITH_BRIDGE
@@ -98,7 +87,6 @@ struct NeighbourInfo {
 #define PACKET_LOG_FILE  "/packet_log"
 
 class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
-  friend class AutoRegions;
   FILESYSTEM* _fs;
   uint32_t last_millis;
   uint64_t uptime_millis;
@@ -243,6 +231,7 @@ public:
   void startRegionsLoad() override;
   bool saveRegions() override;
   void onDefaultRegionChanged(const RegionEntry* r) override;
+  void onNodeConfigChanged() override;
 
   mesh::LocalIdentity& getSelfId() override { return self_id; }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AutoRegions.h"
+#include <lusofw/AutoRegions.h>
 
 // Macro-polygon to quickly determine if a coordinate falls roughly within the European continent.
 // This is intentionally coarse (10 points) to save memory and CPU cycles while providing

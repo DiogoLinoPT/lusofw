@@ -1,4 +1,4 @@
-#include "LusoDefaults.h"
+#include "Defaults.h"
 
 #include <MeshCore.h>
 #include <string.h>
@@ -33,7 +33,7 @@ void LusoDefaults::applyDefaults(NodePrefs &prefs, const char *version) {
                                  // future versions will not change it again
                                  // https://meshcore.pt/en/docs/comunicado-lusofw for more info
 #if defined(USE_SX1262) || defined(USE_SX1268)
-    prefs.rx_boosted_gain = 1; // config struct changes made this be disabled on edge cases
+    prefs.rx_boosted_gain = 1;   // config struct changes made this be disabled on edge cases
 #endif
   }
 }
