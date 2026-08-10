@@ -1,4 +1,5 @@
 #include "UITask.h"
+#include "target.h"
 #include <Arduino.h>
 #include <helpers/CommonCLI.h>
 #include <target.h>
@@ -10,6 +11,7 @@
 #define AUTO_OFF_MILLIS      20000  // 20 seconds
 #define BOOT_SCREEN_MILLIS   5000   // 5 seconds
 #define BATT_REFRESH_MILLIS  60000  // 60 seconds
+#define POWEROFF_DELAY       3000
 
 // LiPo discharge curve: per-cell open-circuit voltage (mV) -> remaining capacity (%).
 // Approximates a standard 1S LiPo at a low discharge rate; linearly interpolated
@@ -121,10 +123,15 @@ static const uint8_t meshcore_logo [] PROGMEM = {
 void UITask::begin(NodePrefs* node_prefs, const char* build_date, const char* firmware_version) {
   _prevBtnState = HIGH;
   _auto_off = millis() + AUTO_OFF_MILLIS;
+  _started_at = millis();
   _node_prefs = node_prefs;
   _cached_batt_mv = 0;
   _next_batt_chck = 0;
   _display->turnOn();
+
+#if defined(PIN_USER_BTN) && defined(DISPLAY_CLASS)
+  user_btn.begin();
+#endif
 
   // strip off dash and commit hash by changing dash to null terminator
   // e.g: v1.2.3-abcdef -> v1.2.3
@@ -135,40 +142,56 @@ void UITask::begin(NodePrefs* node_prefs, const char* build_date, const char* fi
   }
 
   // v1.2.3 (1 Jan 2025)
-  sprintf(_version_info, "%s (%s)", version, build_date);
+  snprintf(_version_info, sizeof(_version_info), "%s (%s)", version, build_date);
+  free(version);
 }
 
 void UITask::renderCurrScreen() {
   char tmp[80];
-  if (millis() < BOOT_SCREEN_MILLIS) { // boot screen
-    // meshcore logo (128x64, centered on the display)
+  if (millis() < _started_at + BOOT_SCREEN_MILLIS) { // boot screen
+    // meshcore logo
+    _display->setColor(UIColor::corp_blue);
     int logoX = (_display->width() - 128) / 2;
     int logoY = (_display->height() - 64) / 2;
-    _display->setColor(DisplayDriver::BLUE);
     _display->drawXbm(logoX, logoY, meshcore_logo, 128, 64);
 
-    // meshcore website (overlaid in the bottom empty band of the logo)
-    const char* website = "https://meshcore.pt";
-    _display->setColor(DisplayDriver::LIGHT);
+    // meshcore website
+    const char *website = "https://meshcore.pt";
+    _display->setColor(UIColor::primary_txt);
     _display->setTextSize(1);
-    uint16_t websiteWidth = _display->getTextWidth(website);
-    _display->setCursor((_display->width() - websiteWidth) / 2, logoY + 44);
-    _display->print(website);
+    _display->drawTextCentered(_display->width() / 2, logoY + 44, website);
 
     // version info
-    uint16_t versionWidth = _display->getTextWidth(_version_info);
-    _display->setCursor((_display->width() - versionWidth) / 2, logoY + 54);
-    _display->print(_version_info);
-  } else {  // home screen
-    // node name
+    _display->setColor(UIColor::secondary_txt);
+    _display->setTextSize(1);
+    _display->drawTextCentered(_display->width() / 2, logoY + 54, _version_info);
+
+  } else if (_powering_off_at > 0) {
+    // meshcore logo
+    _display->setColor(UIColor::corp_blue);
+    int logoX = (_display->width() - 128) / 2;
+    int logoY = (_display->height() - 64) / 2;
+    _display->drawXbm(logoX, logoY, meshcore_logo, 128, 64);
+
+    // meshcore website
+    const char *website = "https://meshcore.pt";
+    _display->setColor(UIColor::primary_txt);
+    _display->setTextSize(1);
+    _display->drawTextCentered(_display->width() / 2, logoY + 44, website);
+
+    // Powering off
+    const char* poweroff_string = "Turning OFF";
+    _display->setColor(UIColor::secondary_txt);
+    _display->setTextSize(1);
+    _display->drawTextCentered(_display->width() / 2, logoY + 54, poweroff_string);
+  } else {
     _display->setCursor(0, 0);
     _display->setTextSize(1);
-    _display->setColor(DisplayDriver::GREEN);
+    _display->setColor(UIColor::primary_txt);
     _display->print(_node_prefs->node_name);
 
     // freq / sf
     _display->setCursor(0, 20);
-    _display->setColor(DisplayDriver::YELLOW);
     sprintf(tmp, "FREQ: %06.3f SF%d", _node_prefs->freq, _node_prefs->sf);
     _display->print(tmp);
 
@@ -188,27 +211,25 @@ void UITask::renderBatteryPercent() {
   char tmp[8];
   sprintf(tmp, "%d%%", batteryPercentage);
 
-  _display->setColor(DisplayDriver::GREEN);
+  _display->setColor(UIColor::primary_txt);
   _display->setTextSize(1);
   _display->drawTextRightAlign(_display->width(), _display->height() - 8, tmp);
 }
 
 void UITask::loop() {
-#ifdef PIN_USER_BTN
-  if (millis() >= _next_read) {
-    int btnState = digitalRead(PIN_USER_BTN);
-    if (btnState != _prevBtnState) {
-      if (btnState == USER_BTN_PRESSED) {  // pressed?
-        if (_display->isOn()) {
-          // TODO: any action ?
-        } else {
-          _display->turnOn();
-        }
-        _auto_off = millis() + AUTO_OFF_MILLIS;   // extend auto-off timer
-      }
-      _prevBtnState = btnState;
+#if defined(PIN_USER_BTN) && defined(DISPLAY_CLASS)
+  int ev = user_btn.check();
+  if (ev == BUTTON_EVENT_CLICK) {
+    if (_display->isOn()) {
+      // TODO: any action ?
+    } else {
+      _display->turnOn();
     }
-    _next_read = millis() + 200;  // 5 reads per second
+    _auto_off = millis() + AUTO_OFF_MILLIS;   // extend auto-off timer
+  } else if (ev == BUTTON_EVENT_LONG_PRESS) {
+      _display->turnOn();
+      Serial.println("Powering Off");
+      _powering_off_at = millis() + POWEROFF_DELAY; 
   }
 #endif
 
@@ -226,6 +247,15 @@ void UITask::loop() {
     }
     if (millis() > _auto_off) {
       _display->turnOff();
+    }
+  }
+
+  if (_powering_off_at > 0) { // power off timer armed
+#ifdef LED_PIN
+    digitalWrite(LED_PIN, LED_STATE_ON); // switch on the led until poweroff
+#endif
+    if (millis() > _powering_off_at) {
+      _board->powerOff();  // should not return
     }
   }
 }

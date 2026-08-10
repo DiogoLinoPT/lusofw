@@ -92,7 +92,8 @@ void UITask::begin(NodePrefs* node_prefs, const char* build_date, const char* fi
   }
 
   // v1.2.3 (1 Jan 2025)
-  sprintf(_version_info, "%s (%s)", version, build_date);
+  snprintf(_version_info, sizeof(_version_info), "%s (%s)", version, build_date);
+  free(version);
 }
 
 void UITask::renderCurrScreen() {
@@ -101,18 +102,20 @@ void UITask::renderCurrScreen() {
     // meshcore logo (128x64, centered on the display)
     int logoX = (_display->width() - 128) / 2;
     int logoY = (_display->height() - 64) / 2;
-    _display->setColor(DisplayDriver::BLUE);
+    _display->setColor(UIColor::corp_blue);
     _display->drawXbm(logoX, logoY, meshcore_logo, 128, 64);
 
-    // meshcore website (overlaid in the bottom empty band of the logo)
-    const char* website = "https://meshcore.pt";
-    _display->setColor(DisplayDriver::LIGHT);
+    // meshcore website
+    const char *website = "https://meshcore.pt";
+    _display->setColor(UIColor::primary_txt);
     _display->setTextSize(1);
     uint16_t websiteWidth = _display->getTextWidth(website);
     _display->setCursor((_display->width() - websiteWidth) / 2, logoY + 44);
     _display->print(website);
 
     // version info
+    _display->setColor(UIColor::primary_txt);
+    _display->setTextSize(1);
     uint16_t versionWidth = _display->getTextWidth(_version_info);
     _display->setCursor((_display->width() - versionWidth) / 2, logoY + 54);
     _display->print(_version_info);
@@ -120,12 +123,11 @@ void UITask::renderCurrScreen() {
     // node name
     _display->setCursor(0, 0);
     _display->setTextSize(1);
-    _display->setColor(DisplayDriver::GREEN);
+    _display->setColor(UIColor::primary_txt);
     _display->print(_node_prefs->node_name);
 
     // freq / sf
     _display->setCursor(0, 20);
-    _display->setColor(DisplayDriver::YELLOW);
     sprintf(tmp, "FREQ: %06.3f SF%d", _node_prefs->freq, _node_prefs->sf);
     _display->print(tmp);
 

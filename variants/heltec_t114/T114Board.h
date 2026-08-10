@@ -50,12 +50,7 @@ public:
 #ifdef LED_PIN
     digitalWrite(LED_PIN, HIGH);
 #endif
-#if ENV_INCLUDE_GPS == 1
-    pinMode(GPS_EN, OUTPUT);
-    digitalWrite(GPS_EN, LOW);
-    pinMode(GPS_RESET, OUTPUT);
-    digitalWrite(GPS_RESET, LOW);   // shared w/ PIN_3V3_EN (pin 38): assert reset + drop GPS rail
-#endif
-    sd_power_system_off();
+
+    NRF52Board::powerOff();
   }
 };
