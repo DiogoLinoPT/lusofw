@@ -225,6 +225,44 @@ void UITask::newMsg(uint8_t path_len, const char* from_name, const char* text, i
   }
 }
 
+// LiPo discharge curve: per-cell open-circuit voltage (mV) -> remaining capacity (%).
+// Approximates a standard 1S LiPo at a low discharge rate; linearly interpolated
+// between points. The non-linear S-shape (steep at the top, a long flat plateau
+// through the mid-range, steep drop near empty) tracks real cell behaviour far
+// better than a straight (v - min) / (max - min) line.
+static const struct { uint16_t milliVolts; uint8_t percent; } lipo_discharge_curve[] = {
+  { 4200, 100 }, { 4150, 95 }, { 4100, 90 }, { 4050, 85 }, { 4000, 80 },
+  { 3950, 74 }, { 3900, 68 }, { 3850, 60 }, { 3800, 50 }, { 3750, 38 },
+  { 3700, 28 }, { 3650, 18 }, { 3600, 10 }, { 3500,  5 }, { 3300,  0 },
+};
+
+#ifndef BATT_MAX_MILLIVOLTS
+  #define BATT_MAX_MILLIVOLTS 4200
+#endif
+
+// Maps a battery voltage to a state-of-charge percentage using the curve above.
+// The number of cells in series is derived from BATT_MAX_MILLIVOLTS, so the same
+// per-cell curve works for 1S (4.2 V) and 2S (8.4 V) packs. Result clamped to [0, 100].
+static int lipoPercentFromMilliVolts(uint16_t batteryMilliVolts) {
+  const int numCells = (BATT_MAX_MILLIVOLTS + 2099) / 4200;   // round(4.2 V per cell)
+  const uint16_t cellMilliVolts = batteryMilliVolts / numCells;
+
+  const int n = sizeof(lipo_discharge_curve) / sizeof(lipo_discharge_curve[0]);
+  if (cellMilliVolts >= lipo_discharge_curve[0].milliVolts) return 100;
+  if (cellMilliVolts <= lipo_discharge_curve[n - 1].milliVolts) return 0;
+
+  for (int i = 0; i < n - 1; i++) {
+    const uint16_t vHi = lipo_discharge_curve[i].milliVolts;
+    const uint16_t vLo = lipo_discharge_curve[i + 1].milliVolts;
+    if (cellMilliVolts <= vHi && cellMilliVolts >= vLo) {
+      const int pHi = lipo_discharge_curve[i].percent;
+      const int pLo = lipo_discharge_curve[i + 1].percent;
+      return pLo + (int)(cellMilliVolts - vLo) * (pHi - pLo) / (int)(vHi - vLo);
+    }
+  }
+  return 0;
+}
+
 void UITask::renderBatteryIndicator(uint16_t batteryMilliVolts) {
   // Convert millivolts to percentage
 #ifndef BATT_MIN_MILLIVOLTS
@@ -233,11 +271,16 @@ void UITask::renderBatteryIndicator(uint16_t batteryMilliVolts) {
 #ifndef BATT_MAX_MILLIVOLTS
   #define BATT_MAX_MILLIVOLTS 4200
 #endif
+#if 0
+  // linear mapping: (v - min) / (max - min)
   const int minMilliVolts = BATT_MIN_MILLIVOLTS;
   const int maxMilliVolts = BATT_MAX_MILLIVOLTS;
   int batteryPercentage = ((batteryMilliVolts - minMilliVolts) * 100) / (maxMilliVolts - minMilliVolts);
   if (batteryPercentage < 0) batteryPercentage = 0; // Clamp to 0%
   if (batteryPercentage > 100) batteryPercentage = 100; // Clamp to 100%
+#else
+  int batteryPercentage = lipoPercentFromMilliVolts(batteryMilliVolts);
+#endif
 
   // battery icon
   int iconWidth = 24;
