@@ -218,6 +218,7 @@ class HomeScreen : public UIScreen {
     int batteryPercentage = lipoPercentFromMilliVolts(batteryMilliVolts);
 #endif
 
+#if 0
     // battery icon
     int iconWidth = 24;
     int iconHeight = 10;
@@ -234,6 +235,29 @@ class HomeScreen : public UIScreen {
     // fill the battery based on the percentage
     int fillWidth = (batteryPercentage * (iconWidth - 4)) / 100;
     display.fillRect(iconX + 2, iconY + 2, fillWidth, iconHeight - 4);
+#endif
+
+#ifdef HAS_RGB_LOGO
+    // T114 ST7789: smaller icon so it isn't oversized after panel scaling.
+    const int iconWidth = 16, iconHeight = 8;
+    const int capW = 2, fillInset = 1, rightPad = 4, topPad = 2;
+#else
+    const int iconWidth = 24, iconHeight = 10;
+    const int capW = 3, fillInset = 2, rightPad = 5, topPad = 0; // original values
+#endif
+    int iconX = display.width() - iconWidth - rightPad; // Position the icon near the top-right corner
+    int iconY = 0 + topPad;
+    display.setColor(UIColor::title_txt);
+
+    // battery outline
+    display.drawRect(iconX, iconY, iconWidth, iconHeight);
+
+    // battery "cap"
+    display.fillRect(iconX + iconWidth, iconY + (iconHeight / 4), capW, iconHeight / 2);
+
+    // fill the battery based on the percentage
+    int fillWidth = (batteryPercentage * (iconWidth - 2 * fillInset)) / 100;
+    display.fillRect(iconX + fillInset, iconY + fillInset, fillWidth, iconHeight - 2 * fillInset);
 
     // show muted icon if buzzer is muted
 #ifdef PIN_BUZZER
