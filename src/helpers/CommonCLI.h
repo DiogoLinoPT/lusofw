@@ -68,6 +68,7 @@ public:
   uint8_t path_hash_mode = 0;   // which path mode to use when sending
   uint8_t loop_detect = 0;
   uint8_t cad_enabled = 0;      // hardware Channel Activity Detection before TX (boolean)
+  uint8_t radio_manual = 0;     // 1 once user manually sets tx power or duty cycle (AutoRegions then leaves airtime alone)
   uint8_t extra_sf[4];
 
 private:
@@ -85,6 +86,7 @@ private:
       def("fem_rxgain", _parent->rx_boosted_gain);
       def("tx", _parent->tx_power_dbm);
       def("af", _parent->airtime_factor);
+      def("radio_manual", _parent->radio_manual); // user set tx/duty manually -> AutoRegions won't override
       def("rxdelay", _parent->rx_delay_base);
       def("f_txdelay", _parent->tx_delay_factor);
       def("d_txdelay", _parent->direct_tx_delay_factor);

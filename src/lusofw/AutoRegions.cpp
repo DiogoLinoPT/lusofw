@@ -374,19 +374,23 @@ void AutoRegions::checkRegionAutoAssign(RegionMap& region_map, NodePrefs& prefs,
     // We only overwrite the active setting in RAM if the user's setting is currently illegal.
     // NOTE: We DO NOT call savePrefs() here because flash writes block interrupts,
     // which causes a boot crash (WDT/Hard Fault) on nRF52/RAK4631.
-    if (in_europe_flag) {
-        if (prefs.airtime_factor < 9.0f) {
-            // Capture the original permissive duty cycle before restricting it
-            if (original_airtime_factor < 0.0f) {
-                original_airtime_factor = prefs.airtime_factor;
+    // Skipped when the user has manually set tx power or duty cycle (prefs.radio_manual):
+    // their explicit choice wins, even if it is above the regulatory floor.
+    if (!prefs.radio_manual) {
+        if (in_europe_flag) {
+            if (prefs.airtime_factor < 9.0f) {
+                // Capture the original permissive duty cycle before restricting it
+                if (original_airtime_factor < 0.0f) {
+                    original_airtime_factor = prefs.airtime_factor;
+                }
+                prefs.airtime_factor = 9.0f;
             }
-            prefs.airtime_factor = 9.0f;
-        }
-    } else {
-        // Restore the original permissive duty cycle if we leave Europe
-        if (original_airtime_factor >= 0.0f) {
-            prefs.airtime_factor = original_airtime_factor;
-            original_airtime_factor = -1.0f;
+        } else {
+            // Restore the original permissive duty cycle if we leave Europe
+            if (original_airtime_factor >= 0.0f) {
+                prefs.airtime_factor = original_airtime_factor;
+                original_airtime_factor = -1.0f;
+            }
         }
     }
 

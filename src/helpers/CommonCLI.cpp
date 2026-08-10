@@ -458,6 +458,7 @@ void CommonCLI::handleSetCmd(uint32_t sender_timestamp, char* command, char* rep
       strcpy(reply, "ERROR: dutycycle must be 1-100");
     } else {
       _prefs->airtime_factor = (100.0f / dc) - 1.0f;
+      _prefs->radio_manual = 1;  // user manually set duty cycle -> AutoRegions must not override
       savePrefs();
       float actual = 100.0f / (_prefs->airtime_factor + 1.0f);
       int a_int = (int)actual;
@@ -466,6 +467,7 @@ void CommonCLI::handleSetCmd(uint32_t sender_timestamp, char* command, char* rep
     }
   } else if (memcmp(config, "af ", 3) == 0) {
     _prefs->airtime_factor = atof(&config[3]);
+    _prefs->radio_manual = 1;  // user manually set airtime factor -> AutoRegions must not override
     savePrefs();
     strcpy(reply, "OK");
   } else if (memcmp(config, "int.thresh ", 11) == 0) {
@@ -694,6 +696,7 @@ void CommonCLI::handleSetCmd(uint32_t sender_timestamp, char* command, char* rep
     }
   } else if (memcmp(config, "tx ", 3) == 0) {
     _prefs->tx_power_dbm = atoi(&config[3]);
+    _prefs->radio_manual = 1;  // user manually set tx power -> AutoRegions must not override
     savePrefs();
     _callbacks->setTxPower(_prefs->tx_power_dbm);
     strcpy(reply, "OK");
