@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-const GeoPoint poly_districts_aveiro[] PROGMEM = {
+const GeoPoint poly_districts_pt_aveiro[] PROGMEM = {
     {40.61992, -8.81408},
     {40.53012, -8.84178},
     {40.49774, -8.83514},
@@ -43,7 +43,7 @@ const GeoPoint poly_districts_aveiro[] PROGMEM = {
     {40.61992, -8.81408},
 };
 
-const GeoPoint poly_districts_beja[] PROGMEM = {
+const GeoPoint poly_districts_pt_beja[] PROGMEM = {
     {37.84526, -8.69386},
     {37.86184, -8.81235},
     {37.83840, -8.84466},
@@ -110,7 +110,7 @@ const GeoPoint poly_districts_beja[] PROGMEM = {
     {37.84526, -8.69386},
 };
 
-const GeoPoint poly_districts_braga[] PROGMEM = {
+const GeoPoint poly_districts_pt_braga[] PROGMEM = {
     {41.59590, -8.86784},
     {41.45199, -8.83018},
     {41.38435, -8.68721},
@@ -147,7 +147,7 @@ const GeoPoint poly_districts_braga[] PROGMEM = {
     {41.59590, -8.86784},
 };
 
-const GeoPoint poly_districts_braganca[] PROGMEM = {
+const GeoPoint poly_districts_pt_braganca[] PROGMEM = {
     {41.23435, -7.48250},
     {41.18918, -7.48429},
     {41.10618, -7.37911},
@@ -197,7 +197,7 @@ const GeoPoint poly_districts_braganca[] PROGMEM = {
     {41.23435, -7.48250},
 };
 
-const GeoPoint poly_districts_castelo_branco[] PROGMEM = {
+const GeoPoint poly_districts_pt_castelo_branco[] PROGMEM = {
     {39.78128, -8.34256},
     {39.72114, -8.29429},
     {39.62758, -8.29278},
@@ -254,7 +254,7 @@ const GeoPoint poly_districts_castelo_branco[] PROGMEM = {
     {39.78128, -8.34256},
 };
 
-const GeoPoint poly_districts_coimbra[] PROGMEM = {
+const GeoPoint poly_districts_pt_coimbra[] PROGMEM = {
     {40.17665, -8.96646},
     {40.12468, -8.92722},
     {40.03400, -8.95171},
@@ -309,7 +309,7 @@ const GeoPoint poly_districts_coimbra[] PROGMEM = {
     {40.17665, -8.96646},
 };
 
-const GeoPoint poly_districts_evora[] PROGMEM = {
+const GeoPoint poly_districts_pt_evora[] PROGMEM = {
     {38.57801, -8.70656},
     {38.51493, -8.67588},
     {38.46979, -8.55123},
@@ -372,7 +372,7 @@ const GeoPoint poly_districts_evora[] PROGMEM = {
     {38.57801, -8.70656},
 };
 
-const GeoPoint poly_districts_faro[] PROGMEM = {
+const GeoPoint poly_districts_pt_faro[] PROGMEM = {
     {37.04090, -9.04860},
     {36.99741, -9.04453},
     {36.94853, -8.94774},
@@ -423,7 +423,7 @@ const GeoPoint poly_districts_faro[] PROGMEM = {
     {37.04090, -9.04860},
 };
 
-const GeoPoint poly_districts_guarda[] PROGMEM = {
+const GeoPoint poly_districts_pt_guarda[] PROGMEM = {
     {40.41104, -7.90386},
     {40.37109, -7.86818},
     {40.32794, -7.85673},
@@ -479,7 +479,7 @@ const GeoPoint poly_districts_guarda[] PROGMEM = {
     {40.41104, -7.90386},
 };
 
-const GeoPoint poly_districts_leiria[] PROGMEM = {
+const GeoPoint poly_districts_pt_leiria[] PROGMEM = {
     {39.38587, -9.45673},
     {39.35981, -9.46766},
     {39.33325, -9.45754},
@@ -531,7 +531,7 @@ const GeoPoint poly_districts_leiria[] PROGMEM = {
     {39.38587, -9.45673},
 };
 
-const GeoPoint poly_districts_lisboa[] PROGMEM = {
+const GeoPoint poly_districts_pt_lisboa[] PROGMEM = {
     {38.86904, -9.50892},
     {38.77234, -9.55720},
     {38.69216, -9.54008},
@@ -569,7 +569,7 @@ const GeoPoint poly_districts_lisboa[] PROGMEM = {
     {38.86904, -9.50892},
 };
 
-const GeoPoint poly_districts_portalegre[] PROGMEM = {
+const GeoPoint poly_districts_pt_portalegre[] PROGMEM = {
     {39.10297, -8.40142},
     {38.98760, -8.30869},
     {38.93594, -8.23861},
@@ -627,7 +627,7 @@ const GeoPoint poly_districts_portalegre[] PROGMEM = {
     {39.10297, -8.40142},
 };
 
-const GeoPoint poly_districts_porto[] PROGMEM = {
+const GeoPoint poly_districts_pt_porto[] PROGMEM = {
     {41.40644, -8.84741},
     {41.31535, -8.80257},
     {41.15843, -8.76486},
@@ -658,7 +658,7 @@ const GeoPoint poly_districts_porto[] PROGMEM = {
     {41.40644, -8.84741},
 };
 
-const GeoPoint poly_districts_santarem[] PROGMEM = {
+const GeoPoint poly_districts_pt_santarem[] PROGMEM = {
     {39.34632, -9.05846},
     {39.22988, -9.03363},
     {39.20009, -8.96444},
@@ -729,7 +729,7 @@ const GeoPoint poly_districts_santarem[] PROGMEM = {
     {39.34632, -9.05846},
 };
 
-const GeoPoint poly_districts_setubal[] PROGMEM = {
+const GeoPoint poly_districts_pt_setubal[] PROGMEM = {
     {38.72328, -9.19525},
     {38.71253, -9.27745},
     {38.67589, -9.31799},
@@ -795,7 +795,7 @@ const GeoPoint poly_districts_setubal[] PROGMEM = {
     {38.72328, -9.19525},
 };
 
-const GeoPoint poly_districts_viana_do_castelo[] PROGMEM = {
+const GeoPoint poly_districts_pt_viana_do_castelo[] PROGMEM = {
     {41.76502, -8.93880},
     {41.71607, -8.93052},
     {41.59254, -8.86606},
@@ -823,7 +823,7 @@ const GeoPoint poly_districts_viana_do_castelo[] PROGMEM = {
     {41.76502, -8.93880},
 };
 
-const GeoPoint poly_districts_vila_real[] PROGMEM = {
+const GeoPoint poly_districts_pt_vila_real[] PROGMEM = {
     {41.71478, -8.17027},
     {41.69023, -8.17967},
     {41.65724, -8.16176},
@@ -871,7 +871,7 @@ const GeoPoint poly_districts_vila_real[] PROGMEM = {
     {41.71478, -8.17027},
 };
 
-const GeoPoint poly_districts_viseu[] PROGMEM = {
+const GeoPoint poly_districts_pt_viseu[] PROGMEM = {
     {40.38984, -8.41423},
     {40.33951, -8.40375},
     {40.28425, -8.28053},
@@ -924,7 +924,7 @@ const GeoPoint poly_districts_viseu[] PROGMEM = {
     {40.38984, -8.41423},
 };
 
-const GeoPoint poly_districts_ilha_da_madeira[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_da_madeira[] PROGMEM = {
     {30.15561, -15.93806},
     {30.11439, -15.91715},
     {30.09300, -15.88125},
@@ -936,7 +936,7 @@ const GeoPoint poly_districts_ilha_da_madeira[] PROGMEM = {
     {30.15561, -15.93806},
 };
 
-const GeoPoint poly_districts_ilha_de_porto_santo[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_de_porto_santo[] PROGMEM = {
     {33.03595, -16.46365},
     {32.96185, -16.41910},
     {32.95857, -16.35243},
@@ -949,7 +949,7 @@ const GeoPoint poly_districts_ilha_de_porto_santo[] PROGMEM = {
     {33.03595, -16.46365},
 };
 
-const GeoPoint poly_districts_ilha_de_santa_maria[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_de_santa_maria[] PROGMEM = {
     {37.05829, -25.04261},
     {37.05680, -25.15471},
     {37.03175, -25.21770},
@@ -964,7 +964,7 @@ const GeoPoint poly_districts_ilha_de_santa_maria[] PROGMEM = {
     {37.05829, -25.04261},
 };
 
-const GeoPoint poly_districts_ilha_de_sao_miguel[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_de_sao_miguel[] PROGMEM = {
     {37.86436, -25.91120},
     {37.79774, -25.88272},
     {37.69907, -25.72980},
@@ -990,7 +990,7 @@ const GeoPoint poly_districts_ilha_de_sao_miguel[] PROGMEM = {
     {37.86436, -25.91120},
 };
 
-const GeoPoint poly_districts_ilha_terceira[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_terceira[] PROGMEM = {
     {38.73279, -27.43588},
     {38.68409, -27.41849},
     {38.64972, -27.38371},
@@ -1008,7 +1008,7 @@ const GeoPoint poly_districts_ilha_terceira[] PROGMEM = {
     {38.73279, -27.43588},
 };
 
-const GeoPoint poly_districts_ilha_da_graciosa[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_da_graciosa[] PROGMEM = {
     {39.07929, -28.12764},
     {39.05219, -28.12728},
     {38.98128, -28.05814},
@@ -1022,7 +1022,7 @@ const GeoPoint poly_districts_ilha_da_graciosa[] PROGMEM = {
     {39.07929, -28.12764},
 };
 
-const GeoPoint poly_districts_ilha_de_sao_jorge[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_de_sao_jorge[] PROGMEM = {
     {38.71502, -28.34700},
     {38.64443, -28.25793},
     {38.48939, -27.83906},
@@ -1038,7 +1038,7 @@ const GeoPoint poly_districts_ilha_de_sao_jorge[] PROGMEM = {
     {38.71502, -28.34700},
 };
 
-const GeoPoint poly_districts_ilha_do_pico[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_do_pico[] PROGMEM = {
     {38.50448, -28.59877},
     {38.46028, -28.58749},
     {38.40927, -28.53738},
@@ -1059,7 +1059,7 @@ const GeoPoint poly_districts_ilha_do_pico[] PROGMEM = {
     {38.50448, -28.59877},
 };
 
-const GeoPoint poly_districts_ilha_do_faial[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_do_faial[] PROGMEM = {
     {38.60095, -28.89206},
     {38.55901, -28.86954},
     {38.47879, -28.76941},
@@ -1072,7 +1072,7 @@ const GeoPoint poly_districts_ilha_do_faial[] PROGMEM = {
     {38.60095, -28.89206},
 };
 
-const GeoPoint poly_districts_ilha_das_flores[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_das_flores[] PROGMEM = {
     {39.46301, -31.32497},
     {39.36719, -31.31064},
     {39.33834, -31.28090},
@@ -1086,7 +1086,7 @@ const GeoPoint poly_districts_ilha_das_flores[] PROGMEM = {
     {39.46301, -31.32497},
 };
 
-const GeoPoint poly_districts_ilha_do_corvo[] PROGMEM = {
+const GeoPoint poly_districts_pt_ilha_do_corvo[] PROGMEM = {
     {39.69591, -31.18644},
     {39.63926, -31.16363},
     {39.62500, -31.10745},
@@ -1099,34 +1099,34 @@ const GeoPoint poly_districts_ilha_do_corvo[] PROGMEM = {
 };
 
 const RegionPolygon PORTUGAL_DISTRICTS[] = {
-    {"#pt-aveiro", poly_districts_aveiro, 38},
-    {"#pt-beja", poly_districts_beja, 64},
-    {"#pt-braga", poly_districts_braga, 34},
-    {"#pt-braganca", poly_districts_braganca, 47},
-    {"#pt-castelo-branco", poly_districts_castelo_branco, 54},
-    {"#pt-coimbra", poly_districts_coimbra, 52},
-    {"#pt-evora", poly_districts_evora, 60},
-    {"#pt-faro", poly_districts_faro, 48},
-    {"#pt-guarda", poly_districts_guarda, 53},
-    {"#pt-leiria", poly_districts_leiria, 49},
-    {"#pt-lisboa", poly_districts_lisboa, 35},
-    {"#pt-portalegre", poly_districts_portalegre, 55},
-    {"#pt-porto", poly_districts_porto, 28},
-    {"#pt-santarem", poly_districts_santarem, 68},
-    {"#pt-setubal", poly_districts_setubal, 63},
-    {"#pt-viana-do-castelo", poly_districts_viana_do_castelo, 25},
-    {"#pt-vila-real", poly_districts_vila_real, 45},
-    {"#pt-viseu", poly_districts_viseu, 50},
-    {"#pt-ilha-da-madeira", poly_districts_ilha_da_madeira, 9},
-    {"#pt-ilha-de-porto-santo", poly_districts_ilha_de_porto_santo, 10},
-    {"#pt-ilha-de-santa-maria", poly_districts_ilha_de_santa_maria, 12},
-    {"#pt-ilha-de-sao-miguel", poly_districts_ilha_de_sao_miguel, 23},
-    {"#pt-ilha-terceira", poly_districts_ilha_terceira, 15},
-    {"#pt-ilha-da-graciosa", poly_districts_ilha_da_graciosa, 11},
-    {"#pt-ilha-de-sao-jorge", poly_districts_ilha_de_sao_jorge, 13},
-    {"#pt-ilha-do-pico", poly_districts_ilha_do_pico, 18},
-    {"#pt-ilha-do-faial", poly_districts_ilha_do_faial, 10},
-    {"#pt-ilha-das-flores", poly_districts_ilha_das_flores, 11},
-    {"#pt-ilha-do-corvo", poly_districts_ilha_do_corvo, 9}
+    {"#pt-aveiro", poly_districts_pt_aveiro, 38},
+    {"#pt-beja", poly_districts_pt_beja, 64},
+    {"#pt-braga", poly_districts_pt_braga, 34},
+    {"#pt-braganca", poly_districts_pt_braganca, 47},
+    {"#pt-castelo-branco", poly_districts_pt_castelo_branco, 54},
+    {"#pt-coimbra", poly_districts_pt_coimbra, 52},
+    {"#pt-evora", poly_districts_pt_evora, 60},
+    {"#pt-faro", poly_districts_pt_faro, 48},
+    {"#pt-guarda", poly_districts_pt_guarda, 53},
+    {"#pt-leiria", poly_districts_pt_leiria, 49},
+    {"#pt-lisboa", poly_districts_pt_lisboa, 35},
+    {"#pt-portalegre", poly_districts_pt_portalegre, 55},
+    {"#pt-porto", poly_districts_pt_porto, 28},
+    {"#pt-santarem", poly_districts_pt_santarem, 68},
+    {"#pt-setubal", poly_districts_pt_setubal, 63},
+    {"#pt-viana-do-castelo", poly_districts_pt_viana_do_castelo, 25},
+    {"#pt-vila-real", poly_districts_pt_vila_real, 45},
+    {"#pt-viseu", poly_districts_pt_viseu, 50},
+    {"#pt-ilha-da-madeira", poly_districts_pt_ilha_da_madeira, 9},
+    {"#pt-ilha-de-porto-santo", poly_districts_pt_ilha_de_porto_santo, 10},
+    {"#pt-ilha-de-santa-maria", poly_districts_pt_ilha_de_santa_maria, 12},
+    {"#pt-ilha-de-sao-miguel", poly_districts_pt_ilha_de_sao_miguel, 23},
+    {"#pt-ilha-terceira", poly_districts_pt_ilha_terceira, 15},
+    {"#pt-ilha-da-graciosa", poly_districts_pt_ilha_da_graciosa, 11},
+    {"#pt-ilha-de-sao-jorge", poly_districts_pt_ilha_de_sao_jorge, 13},
+    {"#pt-ilha-do-pico", poly_districts_pt_ilha_do_pico, 18},
+    {"#pt-ilha-do-faial", poly_districts_pt_ilha_do_faial, 10},
+    {"#pt-ilha-das-flores", poly_districts_pt_ilha_das_flores, 11},
+    {"#pt-ilha-do-corvo", poly_districts_pt_ilha_do_corvo, 9}
 };
 const int NUM_PORTUGAL_DISTRICTS = 29;
