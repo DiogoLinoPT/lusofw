@@ -141,7 +141,7 @@ build_firmware() {
   ENV_PLATFORM=($(get_platform_for_env $1))
   # get git commit sha
   COMMIT_HASH=$(git rev-parse --short HEAD)
-  
+
   # full git tag for firmware build, e.g: main-abcdef-dirty
   FIRMWARE_GIT_TAG=${COMMIT_HASH}$(if [ -n "$(git status --porcelain)" ]; then echo "-dirty"; fi)
 

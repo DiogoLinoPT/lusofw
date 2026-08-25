@@ -9,7 +9,7 @@
  *  | '__/ _ | '_ \| '_ \| |/ _ \  DUAL ACTION
  *  | | |  __| | | | | | | |  __/  MINT FLAVOUR
  *  |_|  \___|_| |_|_| |_|_|\___|  24 comprimidos para mastigar
- * 
+ *
  *  Neutralizam de forma rápida e duradoura o excesso de ácido no estômago.
  *
  */

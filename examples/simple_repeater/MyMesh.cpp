@@ -354,7 +354,7 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
       int results_offset = 0;
       uint8_t results_buffer[130];
       for(int index = 0; index < count && index + offset < neighbours_count; index++){
-        
+
         // stop if we can't fit another entry in results
         int entry_size = pubkey_prefix_length + 4 + 1;
         if(results_offset + entry_size > sizeof(results_buffer)){
@@ -980,7 +980,7 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
 {
   last_millis = 0;
   uptime_millis = 0;
-  
+
   last_network_sync_time = 0;  // no network time sync accepted yet this boot
   next_advert_check = futureMillis(30000);
   next_local_advert = next_flood_advert = 0;
@@ -1067,7 +1067,7 @@ void MyMesh::begin(FILESYSTEM *fs) {
 
   acl.load(_fs, self_id);
   // TODO: key_store.begin();
-  region_map.load(_fs);                                                                                                              
+  region_map.load(_fs);
 
   // establish default-scope
   {
@@ -1218,26 +1218,26 @@ void MyMesh::updateFloodAdvertTimer() {
       uint32_t my_target_epoch = current_cycle_start + my_offset;
       int32_t random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
       int64_t target_epoch = (int64_t)my_target_epoch + random_jitter;
-      
+
       // If the calculated target for the current cycle is already in the past or exactly right now,
       // we must advance to the next cycle to avoid firing multiple times in a row!
       if ((int64_t)now_epoch >= target_epoch) {
           current_cycle_start += WINDOW_SIZE_SECONDS;
           my_target_epoch = current_cycle_start + my_offset;
-          
+
           // Re-calculate jitter for the new cycle!
           random_jitter = ((hash ^ current_cycle_start) % ((JITTER_MAX_SECONDS * 2) + 1)) - JITTER_MAX_SECONDS;
           target_epoch = (int64_t)my_target_epoch + random_jitter;
       }
-      
+
       // We are now guaranteed that target_epoch is strictly greater than now_epoch
       uint32_t wait_seconds = (uint32_t)(target_epoch - (int64_t)now_epoch);
       DateTime dt_target((uint32_t)target_epoch);
 
       MESH_DEBUG_PRINTLN(
           "%s Next smart advert will be at %04d-%02d-%02d %02d:%02d:%02d (in %d seconds)",
-          getLogDateTime(), 
-          dt_target.year(), dt_target.month(), dt_target.day(), 
+          getLogDateTime(),
+          dt_target.year(), dt_target.month(), dt_target.day(),
           dt_target.hour(), dt_target.minute(), dt_target.second(),
           wait_seconds);
 
@@ -1366,7 +1366,7 @@ void MyMesh::formatRadioStatsReply(char *reply) {
 }
 
 void MyMesh::formatPacketStatsReply(char *reply) {
-  StatsFormatHelper::formatPacketStats(reply, radio_driver, getNumSentFlood(), getNumSentDirect(), 
+  StatsFormatHelper::formatPacketStats(reply, radio_driver, getNumSentFlood(), getNumSentDirect(),
                                        getNumRecvFlood(), getNumRecvDirect());
 }
 

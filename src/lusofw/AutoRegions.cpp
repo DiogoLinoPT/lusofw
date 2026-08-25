@@ -8,7 +8,7 @@
 // Define the distance buffer for each region type (0, 5, 10, 20, 35, 50)
 #define REGION_DISTRICTS_BUFFER 0 // km
 #define REGION_NUTS2_BUFFER     0 // km
-#define REGION_CIMS_BUFFER      0 // km 
+#define REGION_CIMS_BUFFER      0 // km
 
 // Enable or disable specific region types
 #define ENABLE_REGION_DISTRICTS
@@ -176,7 +176,7 @@ void AutoRegions::checkRegionAutoAssign(RegionMap& region_map, NodePrefs& prefs,
     // If the user's manual coordinates (_prefs) are 0.0, they explicitly cleared them.
     // Unlike a physical GPS losing lock, a manual 0.0 is an explicit command to drop location.
     // We discard the last known location and force a fallback evaluation immediately.
-    if (prefs.advert_loc_policy == ADVERT_LOC_PREFS && current_lat == 0.0f && current_lon == 0.0f && 
+    if (prefs.advert_loc_policy == ADVERT_LOC_PREFS && current_lat == 0.0f && current_lon == 0.0f &&
         last_checked_lat != -999.0f && (last_checked_lat != 0.0f || last_checked_lon != 0.0f)) {
         last_checked_lat = 0.0f;
         last_checked_lon = 0.0f;

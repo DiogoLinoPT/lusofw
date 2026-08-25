@@ -56,14 +56,14 @@ console.log("--------------------------------------------------");
 for (let i = -5; i <= 5; i++) {
 	let cycle_start = current_cycle_start + (i * WINDOW_SECONDS);
 	let target = cycle_start + offset;
-	
+
 	const jitter = ((hash ^ cycle_start) % 7) - 3;
 	const finalEpoch = target + jitter;
-	
+
 	const dTarget = new Date(finalEpoch * 1000).toISOString().replace('T', ' ').substring(0, 19);
 	const status = finalEpoch < nowEpoch ? "[PAST]" : "[UPCOMING]";
 	const dayLabel = i === 0 ? "Current" : (i > 0 ? `+${i} Day${i > 1 ? 's' : ''}` : `${i} Day${i < -1 ? 's' : ''}`);
-	
+
 	console.log(`Advert ${dayLabel.padEnd(8)}: ${dTarget} UTC (Jitter: ${jitter > 0 ? '+' : ''}${jitter}s) ${status}`);
 }
 console.log("--------------------------------------------------\n");
