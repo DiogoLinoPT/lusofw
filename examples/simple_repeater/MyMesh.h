@@ -35,6 +35,7 @@
 #include <helpers/TxtDataHelpers.h>
 #include <helpers/RegionMap.h>
 #include <lusofw/Defaults.h>
+#include <helpers/RoutingPolicy.h>
 #include "RateLimiter.h"
 
 #ifdef WITH_BRIDGE
@@ -71,15 +72,11 @@ struct NeighbourInfo {
 };
 
 #ifndef FIRMWARE_BUILD_DATE
-  #define FIRMWARE_BUILD_DATE   "9 Aug 2026"
+  #define FIRMWARE_BUILD_DATE   "14 Aug 2026"
 #endif
 
 #ifndef FIRMWARE_VERSION
-  #define FIRMWARE_VERSION "v1.17.0"
-#endif
-
-#ifndef LUSOFW_FIRMWARE_VERSION
-  #define LUSOFW_FIRMWARE_VERSION "2026.8.1-rc4"
+  #define FIRMWARE_VERSION   "v1.17.1"
 #endif
 
 #define FIRMWARE_ROLE "repeater"

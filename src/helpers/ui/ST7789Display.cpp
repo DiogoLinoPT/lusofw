@@ -118,7 +118,7 @@ void ST7789Display::clear() {
 void ST7789Display::startFrame(ColorVal bkg) {
   display.clear();  // TODO: use bkg
   setColor(UIColor::primary_txt);
-  display.setFont(UI_FONT_DEFAULT);
+  display.setFont(ArialMT_Plain_16);
 }
 
 void ST7789Display::setTextSize(int sz) {
