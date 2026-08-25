@@ -79,6 +79,10 @@ struct NeighbourInfo {
   #define FIRMWARE_VERSION   "v1.17.1"
 #endif
 
+#ifndef LUSOFW_FIRMWARE_VERSION
+  #define LUSOFW_FIRMWARE_VERSION   "development"
+#endif
+
 #define FIRMWARE_ROLE "repeater"
 
 #define PACKET_LOG_FILE  "/packet_log"
@@ -245,7 +249,7 @@ public:
     {
       bridge.begin();
     }
-    else 
+    else
     {
       bridge.end();
     }

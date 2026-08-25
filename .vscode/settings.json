@@ -7,10 +7,14 @@
 	"editor.formatOnPaste": true,
 	"editor.detectIndentation": false,
 	"[cpp]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools"
+		"editor.defaultFormatter": "ms-vscode.cpptools",
+		"editor.formatOnSave": false,
+		"editor.formatOnPaste": false
 	},
 	"[c]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools"
+		"editor.defaultFormatter": "ms-vscode.cpptools",
+		"editor.formatOnSave": false,
+		"editor.formatOnPaste": false
 	},
 	"C_Cpp.clang_format_style": "file"
 }
