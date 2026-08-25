@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-const GeoPoint poly_cims_anepc_alto_minho[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_alto_minho[] PROGMEM = {
     {41.71628, -9.11637},
     {41.53530, -9.02932},
     {41.45506, -8.93064},
@@ -24,7 +24,7 @@ const GeoPoint poly_cims_anepc_alto_minho[] PROGMEM = {
     {41.71628, -9.11637},
 };
 
-const GeoPoint poly_cims_anepc_cavado[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_cavado[] PROGMEM = {
     {41.50357, -8.06667},
     {41.60152, -7.90046},
     {41.80463, -7.80381},
@@ -43,7 +43,7 @@ const GeoPoint poly_cims_anepc_cavado[] PROGMEM = {
     {41.50357, -8.06667},
 };
 
-const GeoPoint poly_cims_anepc_ave[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_ave[] PROGMEM = {
     {41.40009, -8.86186},
     {41.26034, -8.82455},
     {41.16799, -8.68058},
@@ -65,7 +65,7 @@ const GeoPoint poly_cims_anepc_ave[] PROGMEM = {
     {41.40009, -8.86186},
 };
 
-const GeoPoint poly_cims_anepc_porto[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_porto[] PROGMEM = {
     {41.40732, -9.02730},
     {41.06268, -8.89674},
     {40.90491, -8.87763},
@@ -86,7 +86,7 @@ const GeoPoint poly_cims_anepc_porto[] PROGMEM = {
     {41.40732, -9.02730},
 };
 
-const GeoPoint poly_cims_anepc_alto_tamega_e_barroso[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_alto_tamega_e_barroso[] PROGMEM = {
     {42.06142, -7.57558},
     {42.09855, -7.97952},
     {41.90966, -8.26020},
@@ -108,7 +108,7 @@ const GeoPoint poly_cims_anepc_alto_tamega_e_barroso[] PROGMEM = {
     {42.06142, -7.57558},
 };
 
-const GeoPoint poly_cims_anepc_tamega_e_sousa[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_tamega_e_sousa[] PROGMEM = {
     {41.26176, -8.68902},
     {40.92628, -8.59921},
     {40.82600, -8.47161},
@@ -125,7 +125,7 @@ const GeoPoint poly_cims_anepc_tamega_e_sousa[] PROGMEM = {
     {41.26176, -8.68902},
 };
 
-const GeoPoint poly_cims_anepc_douro[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_douro[] PROGMEM = {
     {41.25097, -8.15367},
     {41.00851, -8.15357},
     {40.88168, -8.08869},
@@ -151,7 +151,7 @@ const GeoPoint poly_cims_anepc_douro[] PROGMEM = {
     {41.25097, -8.15367},
 };
 
-const GeoPoint poly_cims_anepc_terras_tras_os_montes[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_terras_tras_os_montes[] PROGMEM = {
     {41.40619, -7.60577},
     {41.28150, -7.57328},
     {41.07760, -7.35755},
@@ -177,7 +177,7 @@ const GeoPoint poly_cims_anepc_terras_tras_os_montes[] PROGMEM = {
     {41.40619, -7.60577},
 };
 
-const GeoPoint poly_cims_anepc_algarve[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_algarve[] PROGMEM = {
     {37.06117, -9.21720},
     {36.92301, -9.18534},
     {36.81707, -8.99176},
@@ -207,7 +207,7 @@ const GeoPoint poly_cims_anepc_algarve[] PROGMEM = {
     {37.06117, -9.21720},
 };
 
-const GeoPoint poly_cims_anepc_regiao_de_aveiro[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_regiao_de_aveiro[] PROGMEM = {
     {40.57944, -9.00926},
     {40.49256, -9.01774},
     {40.42975, -8.98828},
@@ -227,7 +227,7 @@ const GeoPoint poly_cims_anepc_regiao_de_aveiro[] PROGMEM = {
     {40.57944, -9.00926},
 };
 
-const GeoPoint poly_cims_anepc_regiao_de_coimbra[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_regiao_de_coimbra[] PROGMEM = {
     {40.15724, -9.14120},
     {39.97058, -9.10841},
     {39.87069, -8.99266},
@@ -252,7 +252,7 @@ const GeoPoint poly_cims_anepc_regiao_de_coimbra[] PROGMEM = {
     {40.15724, -9.14120},
 };
 
-const GeoPoint poly_cims_anepc_regiao_de_leiria[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_regiao_de_leiria[] PROGMEM = {
     {39.79454, -9.26252},
     {39.69646, -9.26667},
     {39.58361, -9.16038},
@@ -275,7 +275,7 @@ const GeoPoint poly_cims_anepc_regiao_de_leiria[] PROGMEM = {
     {39.79454, -9.26252},
 };
 
-const GeoPoint poly_cims_anepc_viseu_dao_lafoes[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_viseu_dao_lafoes[] PROGMEM = {
     {40.68419, -8.56019},
     {40.55773, -8.53969},
     {40.46943, -8.50304},
@@ -296,7 +296,7 @@ const GeoPoint poly_cims_anepc_viseu_dao_lafoes[] PROGMEM = {
     {40.68419, -8.56019},
 };
 
-const GeoPoint poly_cims_anepc_beira_baixa[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_beira_baixa[] PROGMEM = {
     {40.46557, -6.96402},
     {40.50332, -7.08479},
     {40.48888, -7.21193},
@@ -323,7 +323,7 @@ const GeoPoint poly_cims_anepc_beira_baixa[] PROGMEM = {
     {40.46557, -6.96402},
 };
 
-const GeoPoint poly_cims_anepc_beiras_e_serra_estrela[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_beiras_e_serra_estrela[] PROGMEM = {
     {40.37884, -8.07627},
     {40.32360, -8.04795},
     {39.99832, -8.03802},
@@ -351,7 +351,49 @@ const GeoPoint poly_cims_anepc_beiras_e_serra_estrela[] PROGMEM = {
     {40.37884, -8.07627},
 };
 
-const GeoPoint poly_cims_anepc_alentejo_litoral[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_grande_lisboa[] PROGMEM = {
+    {39.20427, -8.95247},
+    {39.18522, -9.10877},
+    {39.24267, -9.42307},
+    {39.16586, -9.59868},
+    {38.78363, -9.73123},
+    {38.61320, -9.68186},
+    {38.52242, -9.52474},
+    {38.49452, -9.29688},
+    {38.53296, -9.04305},
+    {38.66089, -8.83982},
+    {38.88206, -8.64225},
+    {39.03509, -8.61133},
+    {39.12876, -8.65903},
+    {39.18446, -8.74488},
+    {39.20427, -8.95247},
+};
+
+const GeoPoint poly_cims_pt_anepc_peninsula_de_setubal[] PROGMEM = {
+    {39.01694, -8.64029},
+    {38.99331, -9.05230},
+    {38.95508, -9.12811},
+    {38.86099, -9.20616},
+    {38.83265, -9.35619},
+    {38.78751, -9.42850},
+    {38.64768, -9.49251},
+    {38.53455, -9.42466},
+    {38.39055, -9.45046},
+    {38.29722, -9.39758},
+    {38.23025, -9.20425},
+    {38.29437, -8.90525},
+    {38.28486, -8.74651},
+    {38.31025, -8.64861},
+    {38.43647, -8.46035},
+    {38.53524, -8.40988},
+    {38.65086, -8.28600},
+    {38.79040, -8.26330},
+    {38.85798, -8.29632},
+    {38.97998, -8.44894},
+    {39.01694, -8.64029},
+};
+
+const GeoPoint poly_cims_pt_anepc_alentejo_litoral[] PROGMEM = {
     {37.94413, -9.11700},
     {37.85755, -9.09107},
     {37.80404, -9.03698},
@@ -382,7 +424,7 @@ const GeoPoint poly_cims_anepc_alentejo_litoral[] PROGMEM = {
     {37.94413, -9.11700},
 };
 
-const GeoPoint poly_cims_anepc_baixo_alentejo[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_baixo_alentejo[] PROGMEM = {
     {38.50072, -7.98992},
     {38.48086, -8.28094},
     {38.35201, -8.38984},
@@ -415,7 +457,7 @@ const GeoPoint poly_cims_anepc_baixo_alentejo[] PROGMEM = {
     {38.50072, -7.98992},
 };
 
-const GeoPoint poly_cims_anepc_alto_alentejo[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_alto_alentejo[] PROGMEM = {
     {39.10587, -8.57477},
     {39.00473, -8.53964},
     {38.82502, -8.34002},
@@ -444,7 +486,7 @@ const GeoPoint poly_cims_anepc_alto_alentejo[] PROGMEM = {
     {39.10587, -8.57477},
 };
 
-const GeoPoint poly_cims_anepc_alentejo_central[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_alentejo_central[] PROGMEM = {
     {38.53592, -8.87106},
     {38.41116, -8.78597},
     {38.33263, -8.54590},
@@ -475,7 +517,7 @@ const GeoPoint poly_cims_anepc_alentejo_central[] PROGMEM = {
     {38.53592, -8.87106},
 };
 
-const GeoPoint poly_cims_anepc_oeste[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_oeste[] PROGMEM = {
     {39.90528, -8.94540},
     {39.92074, -9.05849},
     {39.88460, -9.18199},
@@ -501,7 +543,7 @@ const GeoPoint poly_cims_anepc_oeste[] PROGMEM = {
     {39.90528, -8.94540},
 };
 
-const GeoPoint poly_cims_anepc_medio_tejo[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_medio_tejo[] PROGMEM = {
     {39.44809, -8.99024},
     {39.33591, -8.97872},
     {39.24949, -8.88604},
@@ -521,7 +563,7 @@ const GeoPoint poly_cims_anepc_medio_tejo[] PROGMEM = {
     {39.44809, -8.99024},
 };
 
-const GeoPoint poly_cims_anepc_leziria_do_tejo[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_leziria_do_tejo[] PROGMEM = {
     {39.33011, -9.23123},
     {39.15399, -9.23295},
     {38.93861, -9.15326},
@@ -551,7 +593,7 @@ const GeoPoint poly_cims_anepc_leziria_do_tejo[] PROGMEM = {
     {39.33011, -9.23123},
 };
 
-const GeoPoint poly_cims_anepc_ra_acores[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_acores[] PROGMEM = {
     {37.01049, -25.40752},
     {36.85380, -25.36075},
     {36.76191, -25.18893},
@@ -567,7 +609,7 @@ const GeoPoint poly_cims_anepc_ra_acores[] PROGMEM = {
     {37.01049, -25.40752},
 };
 
-const GeoPoint poly_cims_anepc_ra_madeira[] PROGMEM = {
+const GeoPoint poly_cims_pt_anepc_madeira[] PROGMEM = {
     {30.02895, -16.26147},
     {29.94715, -16.23544},
     {29.88288, -16.17297},
@@ -582,59 +624,32 @@ const GeoPoint poly_cims_anepc_ra_madeira[] PROGMEM = {
     {30.02895, -16.26147},
 };
 
-const GeoPoint poly_cims_anepc_lisboa[] PROGMEM = {
-    {39.20427, -8.95247},
-    {39.18522, -9.10877},
-    {39.24267, -9.42307},
-    {39.19166, -9.56673},
-    {39.10228, -9.63990},
-    {38.96392, -9.65372},
-    {38.78363, -9.73123},
-    {38.64405, -9.70149},
-    {38.55034, -9.60158},
-    {38.50951, -9.42681},
-    {38.35697, -9.44058},
-    {38.25442, -9.32925},
-    {38.23195, -9.16627},
-    {38.29437, -8.90525},
-    {38.31025, -8.64861},
-    {38.43647, -8.46035},
-    {38.53524, -8.40988},
-    {38.65086, -8.28600},
-    {38.79040, -8.26330},
-    {38.88651, -8.32522},
-    {38.99974, -8.48673},
-    {39.02026, -8.61138},
-    {39.10008, -8.63556},
-    {39.18446, -8.74488},
-    {39.20427, -8.95247},
-};
-
 const RegionPolygon PORTUGAL_ANEPC_CIMS[] = {
-    {"#pt-anepc-alto-minho", poly_cims_anepc_alto_minho, 19},
-    {"#pt-anepc-cavado", poly_cims_anepc_cavado, 16},
-    {"#pt-anepc-ave", poly_cims_anepc_ave, 19},
-    {"#pt-anepc-porto", poly_cims_anepc_porto, 18},
-    {"#pt-anepc-alto-tamega-barroso", poly_cims_anepc_alto_tamega_e_barroso, 19},
-    {"#pt-anepc-tamega-e-sousa", poly_cims_anepc_tamega_e_sousa, 14},
-    {"#pt-anepc-douro", poly_cims_anepc_douro, 23},
-    {"#pt-anepc-terras-tras-montes", poly_cims_anepc_terras_tras_os_montes, 23},
-    {"#pt-anepc-algarve", poly_cims_anepc_algarve, 27},
-    {"#pt-anepc-regiao-de-aveiro", poly_cims_anepc_regiao_de_aveiro, 17},
-    {"#pt-anepc-regiao-de-coimbra", poly_cims_anepc_regiao_de_coimbra, 22},
-    {"#pt-anepc-regiao-de-leiria", poly_cims_anepc_regiao_de_leiria, 20},
-    {"#pt-anepc-viseu-dao-lafoes", poly_cims_anepc_viseu_dao_lafoes, 18},
-    {"#pt-anepc-beira-baixa", poly_cims_anepc_beira_baixa, 24},
-    {"#pt-anepc-beiras-serra-estrela", poly_cims_anepc_beiras_e_serra_estrela, 25},
-    {"#pt-anepc-alentejo-litoral", poly_cims_anepc_alentejo_litoral, 28},
-    {"#pt-anepc-baixo-alentejo", poly_cims_anepc_baixo_alentejo, 30},
-    {"#pt-anepc-alto-alentejo", poly_cims_anepc_alto_alentejo, 26},
-    {"#pt-anepc-alentejo-central", poly_cims_anepc_alentejo_central, 28},
-    {"#pt-anepc-oeste", poly_cims_anepc_oeste, 23},
-    {"#pt-anepc-medio-tejo", poly_cims_anepc_medio_tejo, 17},
-    {"#pt-anepc-leziria-do-tejo", poly_cims_anepc_leziria_do_tejo, 27},
-    {"#pt-anepc-ra-acores", poly_cims_anepc_ra_acores, 13},
-    {"#pt-anepc-ra-madeira", poly_cims_anepc_ra_madeira, 12},
-    {"#pt-anepc-lisboa", poly_cims_anepc_lisboa, 25}
+    {"#pt-anepc-alto-minho", poly_cims_pt_anepc_alto_minho, 19},
+    {"#pt-anepc-cavado", poly_cims_pt_anepc_cavado, 16},
+    {"#pt-anepc-ave", poly_cims_pt_anepc_ave, 19},
+    {"#pt-anepc-porto", poly_cims_pt_anepc_porto, 18},
+    {"#pt-anepc-alto-tamega-e-barroso", poly_cims_pt_anepc_alto_tamega_e_barroso, 19},
+    {"#pt-anepc-tamega-e-sousa", poly_cims_pt_anepc_tamega_e_sousa, 14},
+    {"#pt-anepc-douro", poly_cims_pt_anepc_douro, 23},
+    {"#pt-anepc-terras-tras-os-montes", poly_cims_pt_anepc_terras_tras_os_montes, 23},
+    {"#pt-anepc-algarve", poly_cims_pt_anepc_algarve, 27},
+    {"#pt-anepc-regiao-de-aveiro", poly_cims_pt_anepc_regiao_de_aveiro, 17},
+    {"#pt-anepc-regiao-de-coimbra", poly_cims_pt_anepc_regiao_de_coimbra, 22},
+    {"#pt-anepc-regiao-de-leiria", poly_cims_pt_anepc_regiao_de_leiria, 20},
+    {"#pt-anepc-viseu-dao-lafoes", poly_cims_pt_anepc_viseu_dao_lafoes, 18},
+    {"#pt-anepc-beira-baixa", poly_cims_pt_anepc_beira_baixa, 24},
+    {"#pt-anepc-beiras-e-serra-estrela", poly_cims_pt_anepc_beiras_e_serra_estrela, 25},
+    {"#pt-anepc-grande-lisboa", poly_cims_pt_anepc_grande_lisboa, 15},
+    {"#pt-anepc-peninsula-de-setubal", poly_cims_pt_anepc_peninsula_de_setubal, 21},
+    {"#pt-anepc-alentejo-litoral", poly_cims_pt_anepc_alentejo_litoral, 28},
+    {"#pt-anepc-baixo-alentejo", poly_cims_pt_anepc_baixo_alentejo, 30},
+    {"#pt-anepc-alto-alentejo", poly_cims_pt_anepc_alto_alentejo, 26},
+    {"#pt-anepc-alentejo-central", poly_cims_pt_anepc_alentejo_central, 28},
+    {"#pt-anepc-oeste", poly_cims_pt_anepc_oeste, 23},
+    {"#pt-anepc-medio-tejo", poly_cims_pt_anepc_medio_tejo, 17},
+    {"#pt-anepc-leziria-do-tejo", poly_cims_pt_anepc_leziria_do_tejo, 27},
+    {"#pt-anepc-acores", poly_cims_pt_anepc_acores, 13},
+    {"#pt-anepc-madeira", poly_cims_pt_anepc_madeira, 12}
 };
-const int NUM_PORTUGAL_ANEPC_CIMS = 25;
+const int NUM_PORTUGAL_ANEPC_CIMS = 26;

@@ -27,9 +27,9 @@ public:
 
 private:
   static bool in_europe_flag;
-  static void inject_hierarchy(RegionMap& region_map, bool create_eu, bool create_pt);
+  static bool inject_hierarchy(RegionMap& region_map, bool create_eu, bool create_pt);
   static uint16_t get_parent_for_region(RegionMap& region_map, const char* name);
-  static void enable_region_path(RegionMap& region_map, const char* name);
-  static void apply_dynamic_region(RegionMap& region_map, const char* reg_name, uint16_t parent_id);
-  static void remove_outdated_region(RegionMap& region_map, const char* reg_name);
+  static bool enable_region_path(RegionMap& region_map, const char* name);
+  static bool apply_dynamic_region(RegionMap& region_map, const char* reg_name, uint16_t parent_id);
+  static bool remove_outdated_region(RegionMap& region_map, const char* reg_name);
 };
